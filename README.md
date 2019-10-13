@@ -1,5 +1,6 @@
 # PDFImporter
 PDFを読み込むブループリントノードを追加するプラグインです。
+動作にはGhostscriptが必要です。
 
 # 関数
 - OpenPDFDialog ... ファイルブラウザからPDFファイルを選択し、そのファイルパスを返します。
