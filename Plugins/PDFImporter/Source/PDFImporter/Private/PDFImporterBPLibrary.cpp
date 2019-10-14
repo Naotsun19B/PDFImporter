@@ -34,13 +34,16 @@ void UPDFImporterBPLibrary::OpenPDFDialog(const FString& DefaultPath, EOpenPDFDi
 
 				if (result) 
 				{
-					FileName = resultTemp[0];
+					//相対パスを絶対パスに変換
+					FileName = FPaths::ConvertRelativePathToFull(resultTemp[0]);
+					UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : %s"), *FileName);
 					OutputPin = EOpenPDFDialogResult::Successful;
 					return;
 				}
 			}
 		}
 	}
+	UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : Cancelled"));
 	OutputPin = EOpenPDFDialogResult::Cancelled;
 }
 
@@ -65,11 +68,18 @@ void UPDFImporterBPLibrary::OpenPDFDialogMultiple(const FString& DefaultPath, EO
 
 				if (result) 
 				{
+					//相対パスを絶対パスに変換
+					for (FString& fileName : FileNames)
+					{
+						fileName = FPaths::ConvertRelativePathToFull(fileName);
+						UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : %s"), *fileName);
+					}
 					OutputPin = EOpenPDFDialogResult::Successful;
 					return;
 				}
 			}
 		}
 	}
+	UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : Cancelled"));
 	OutputPin = EOpenPDFDialogResult::Cancelled;
 }

@@ -67,7 +67,7 @@ void UConvertPDFtoTexture2D::ExecConversion()
 	}
 
 	//作業用のディレクトリを作成
-	FString tempDirPath = FPaths::Combine(FPaths::GameSavedDir(), TEXT("ConvertTemp"), TEXT(""));
+	FString tempDirPath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("ConvertTemp"), TEXT(""));
 	tempDirPath = FPaths::ConvertRelativePathToFull(tempDirPath);
 	if (!fileManager.DirectoryExists(*tempDirPath))
 	{
@@ -127,8 +127,9 @@ bool UConvertPDFtoTexture2D::ConvertPDFtoJPG(const FString& PDFFilePath, const F
 	params += TEXT(" -sOutputFile=\"");
 	params += OutDirPath;
 	params += FPaths::GetBaseFilename(PDFFilePath);
-	params += TEXT("%03d.jpg\" ");
+	params += TEXT("%03d.jpg\" \"");
 	params += PDFFilePath;
+	params += TEXT("\"");
 
 	//Ghostscriptを実行（終了まで待機）
 	int32 returnCode = 0;
