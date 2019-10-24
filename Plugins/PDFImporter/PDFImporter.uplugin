@@ -14,10 +14,15 @@
 	"IsBetaVersion": false,
 	"Installed": false,
 	"Modules": [
-		{
-			"Name": "PDFImporter",
-			"Type": "Runtime",
-			"LoadingPhase": "PreLoadingScreen"
-		}
+    {
+      "Name": "PDFImporter",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "PDFImporterEd",
+      "Type": "Developer",
+      "LoadingPhase": "PreDefault"
+    }
 	]
 }
