@@ -5,6 +5,7 @@
 #include "Engine.h"
 #include "Developer/DesktopPlatform/Public/IDesktopPlatform.h"
 #include "Developer/DesktopPlatform/Public/DesktopPlatformModule.h"
+#include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 
 UPDFImporterBPLibrary::UPDFImporterBPLibrary(const FObjectInitializer& ObjectInitializer)
 : Super(ObjectInitializer)
@@ -82,4 +83,29 @@ void UPDFImporterBPLibrary::OpenPDFDialogMultiple(const FString& DefaultPath, EO
 	}
 	UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : Cancelled"));
 	OutputPin = EOpenPDFDialogResult::Cancelled;
+}
+
+void* UPDFImporterBPLibrary::GetWindowHandle()
+{
+	//エディタの場合
+	if (GIsEditor)
+	{
+		IMainFrameModule& MainFrameModule = IMainFrameModule::Get();
+		TSharedPtr<SWindow> MainWindow = MainFrameModule.GetParentWindow();
+
+		if (MainWindow.IsValid() && MainWindow->GetNativeWindow().IsValid())
+		{
+			return MainWindow->GetNativeWindow()->GetOSWindowHandle();
+		}
+	}
+	//実行時の場合
+	else
+	{
+		if (GEngine && GEngine->GameViewport)
+		{
+			return GEngine->GameViewport->GetWindow()->GetNativeWindow()->GetOSWindowHandle();
+		}
+	}
+
+	return nullptr;
 }

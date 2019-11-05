@@ -29,8 +29,6 @@ enum class EOpenPDFDialogResult : uint8
 	Successful, Cancelled
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FConversionComplete, bool, bIsSuccess);
-
 UCLASS()
 class UPDFImporterBPLibrary : public UBlueprintFunctionLibrary
 {
@@ -44,4 +42,8 @@ public:
 	// Get the file paths of the selected PDF files
 	UFUNCTION(BlueprintCallable, Category = "PDFImporter | OpenFileDialog", meta = (AdvancedDisplay = "DefaultPath", DisplayName = "Open PDF Dialog Multiple", ExpandEnumAsExecs = "OutputPin"))
 		static void OpenPDFDialogMultiple(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, TArray<FString>& FileNames);
+
+protected:
+	// Get window handle
+	static void* GetWindowHandle();
 };
