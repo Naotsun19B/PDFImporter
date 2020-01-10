@@ -8,14 +8,14 @@ private:
 	friend class FAutoDeleteAsyncTask<FAsyncExecTask>;
 
 private:
-	TFunction<void()> mWork;
+	TFunction<void()> Work;
 
 public:
 	// Constructor
-	FAsyncExecTask(TFunction<void()> InWork) : mWork(InWork) {}
+	FAsyncExecTask(TFunction<void()> InWork) : Work(InWork) {}
 
 	// Exec function
-	void DoWork() { mWork(); }
+	void DoWork() { Work(); }
 
 	FORCEINLINE TStatId GetStatId() const
 	{

@@ -43,7 +43,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PDFImporter | OpenFileDialog", meta = (AdvancedDisplay = "DefaultPath", DisplayName = "Open PDF Dialog Multiple", ExpandEnumAsExecs = "OutputPin"))
 		static void OpenPDFDialogMultiple(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, TArray<FString>& FileNames);
 
-protected:
+private:
 	// Get window handle
 	static void* GetWindowHandle();
+
+	// Run open file dialog
+	static EOpenPDFDialogResult ExecOpenFileDialog(const FString& DefaultPath, TArray<FString>& FileNames, bool bIsMultiple);
 };

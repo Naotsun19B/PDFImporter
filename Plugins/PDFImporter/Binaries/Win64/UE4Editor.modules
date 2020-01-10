@@ -1,0 +1,8 @@
+{
+	"BuildId": "5660361",
+	"Modules": 
+	{
+		"PDFImporter": "UE4Editor-PDFImporter.dll",
+		"PDFImporterEd": "UE4Editor-PDFImporterEd.dll"
+	}
+}

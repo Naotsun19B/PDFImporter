@@ -15,74 +15,14 @@ UPDFImporterBPLibrary::UPDFImporterBPLibrary(const FObjectInitializer& ObjectIni
 
 void UPDFImporterBPLibrary::OpenPDFDialog(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, FString& FileName)
 {
-	if (GEngine) 
-	{
-		if (GEngine->GameViewport)
-		{
-			IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
-			if(desktopPlatform)
-			{
-				TArray<FString> resultTemp;
-				bool result = desktopPlatform->OpenFileDialog(
-					GEngine->GameViewport->GetWindow()->GetNativeWindow()->GetOSWindowHandle(),
-					TEXT("Open PDF Dialog"),
-					DefaultPath,
-					TEXT(""),
-					TEXT("PDF File (.pdf)|*.pdf"),
-					EFileDialogFlags::Type::None,
-					resultTemp
-				);
-
-				if (result) 
-				{
-					//相対パスを絶対パスに変換
-					FileName = FPaths::ConvertRelativePathToFull(resultTemp[0]);
-					UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : %s"), *FileName);
-					OutputPin = EOpenPDFDialogResult::Successful;
-					return;
-				}
-			}
-		}
-	}
-	UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : Cancelled"));
-	OutputPin = EOpenPDFDialogResult::Cancelled;
+	TArray<FString> FileNameTemp;
+	OutputPin = ExecOpenFileDialog(DefaultPath, FileNameTemp, false);
+	FileName = FileNameTemp[0];
 }
 
 void UPDFImporterBPLibrary::OpenPDFDialogMultiple(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, TArray<FString>& FileNames)
 {
-	if (GEngine)
-	{
-		if (GEngine->GameViewport)
-		{
-			IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
-			if (desktopPlatform)
-			{
-				bool result = desktopPlatform->OpenFileDialog(
-					GEngine->GameViewport->GetWindow()->GetNativeWindow()->GetOSWindowHandle(),
-					TEXT("Open PDF Dialog"),
-					DefaultPath,
-					TEXT(""),
-					TEXT("PDF File (.pdf)|*.pdf"),
-					EFileDialogFlags::Type::Multiple,
-					FileNames
-				);
-
-				if (result) 
-				{
-					//相対パスを絶対パスに変換
-					for (FString& fileName : FileNames)
-					{
-						fileName = FPaths::ConvertRelativePathToFull(fileName);
-						UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : %s"), *fileName);
-					}
-					OutputPin = EOpenPDFDialogResult::Successful;
-					return;
-				}
-			}
-		}
-	}
-	UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : Cancelled"));
-	OutputPin = EOpenPDFDialogResult::Cancelled;
+	OutputPin = ExecOpenFileDialog(DefaultPath, FileNames, true);
 }
 
 void* UPDFImporterBPLibrary::GetWindowHandle()
@@ -108,4 +48,38 @@ void* UPDFImporterBPLibrary::GetWindowHandle()
 	}
 
 	return nullptr;
+}
+
+EOpenPDFDialogResult UPDFImporterBPLibrary::ExecOpenFileDialog(const FString& DefaultPath, TArray<FString>& FileNames, bool bIsMultiple)
+{
+	void* WindowHandle = GetWindowHandle();
+	if (WindowHandle)
+	{
+		IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
+		if (desktopPlatform)
+		{
+			bool result = desktopPlatform->OpenFileDialog(
+				GEngine->GameViewport->GetWindow()->GetNativeWindow()->GetOSWindowHandle(),
+				TEXT("Open PDF Dialog"),
+				DefaultPath,
+				TEXT(""),
+				TEXT("PDF File (.pdf)|*.pdf"),
+				(bIsMultiple ? EFileDialogFlags::Type::Multiple : EFileDialogFlags::Type::None),
+				FileNames
+			);
+
+			if (result)
+			{
+				//相対パスを絶対パスに変換
+				for (FString& fileName : FileNames)
+				{
+					fileName = FPaths::ConvertRelativePathToFull(fileName);
+					UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : %s"), *fileName);
+				}
+				return EOpenPDFDialogResult::Successful;
+			}
+		}
+	}
+	UE_LOG(PDFImporter, Log, TEXT("Open PDF Dialog : Cancelled"));
+	return EOpenPDFDialogResult::Cancelled;
 }
