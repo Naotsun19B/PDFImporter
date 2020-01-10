@@ -36,14 +36,17 @@ class UPDFImporterBPLibrary : public UBlueprintFunctionLibrary
 
 public:
 	// Get the file path of the selected PDF file
-	UFUNCTION(BlueprintCallable, Category = "PDFImporter | OpenFileDialog", meta = (AdvancedDisplay = "DefaultPath", DisplayName = "Open PDF Dialog", ExpandEnumAsExecs = "OutputPin"))
-		static void OpenPDFDialog(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, FString& FileName);
+	UFUNCTION(BlueprintCallable, Category = "PDFImporter", meta = (AdvancedDisplay = "DefaultPath", DisplayName = "Open PDF Dialog", ExpandEnumAsExecs = "OutputPin"))
+	static void OpenPDFDialog(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, FString& FileName);
 
 	// Get the file paths of the selected PDF files
-	UFUNCTION(BlueprintCallable, Category = "PDFImporter | OpenFileDialog", meta = (AdvancedDisplay = "DefaultPath", DisplayName = "Open PDF Dialog Multiple", ExpandEnumAsExecs = "OutputPin"))
-		static void OpenPDFDialogMultiple(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, TArray<FString>& FileNames);
+	UFUNCTION(BlueprintCallable, Category = "PDFImporter", meta = (AdvancedDisplay = "DefaultPath", DisplayName = "Open PDF Dialog Multiple", ExpandEnumAsExecs = "OutputPin"))
+	static void OpenPDFDialogMultiple(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, TArray<FString>& FileNames);
 
-protected:
+private:
 	// Get window handle
 	static void* GetWindowHandle();
+
+	// Run open file dialog
+	static EOpenPDFDialogResult ExecOpenPDFDialog(const FString& DefaultPath, TArray<FString>& FileNames, bool bIsMultiple);
 };
