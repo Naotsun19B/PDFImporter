@@ -6,7 +6,7 @@
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "ConvertPDFtoTexture2D.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLoadingCompletedPin, const TArray<UTexture2D*>&, Pages);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLoadingCompletedPin, class UPDF*, PDF);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFailedToLoadPin);
 
 UCLASS()
@@ -26,7 +26,6 @@ public:
 private:
 	const UObject* WorldContextObject;
 	bool bIsActive;
-	TSharedPtr<class IImageWrapper> ImageWrapper;
 
 	// For argument passing
 	FString PDFFilePath;
@@ -54,9 +53,6 @@ public:
 	virtual void Activate() override;
 
 private:
-	// Execute ConvertPDFtoJPG function
+	// Execute convert process
 	void ExecConversion();
-
-	// Import as UTexture2D from folder image file
-	bool LoadTexture2DFromFile(const FString& FilePath, UTexture2D* &LoadedTexture);
 };
