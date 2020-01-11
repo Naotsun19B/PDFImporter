@@ -12,7 +12,7 @@
 
 UConvertPDFtoTexture2D::UConvertPDFtoTexture2D(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer), WorldContextObject(nullptr), bIsActive(false), 
-	  PDFFilePath(""), Dpi(0), FirstPage(0), LastPage(0)
+	  PDFFilePath(""), Dpi(0), FirstPage(0), LastPage(0), Locale("")
 {
 	IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
 	ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::JPEG);
@@ -23,7 +23,8 @@ UConvertPDFtoTexture2D* UConvertPDFtoTexture2D::ConvertPDFtoTexture2D(
 	const FString& PDFFilePath, 
 	int Dpi,
 	int FirstPage,
-	int LastPage
+	int LastPage,
+	const FString& Locale
 ){
 	UConvertPDFtoTexture2D* Node = NewObject<UConvertPDFtoTexture2D>();
 	Node->WorldContextObject = WorldContextObject;
@@ -31,6 +32,7 @@ UConvertPDFtoTexture2D* UConvertPDFtoTexture2D::ConvertPDFtoTexture2D(
 	Node->Dpi = Dpi;
 	Node->FirstPage = FirstPage;
 	Node->LastPage = LastPage;
+	Node->Locale = Locale;
 	return Node;
 }
 
@@ -73,20 +75,11 @@ void UConvertPDFtoTexture2D::ExecConversion()
 	FileManager.MakeDirectory(*TempDirPath);
 	UE_LOG(PDFImporter, Log, TEXT("A working directory has been created (%s)"), *TempDirPath);
 
-	//PDFファイルをコピー
-	FString ConvertTargetPath = FPaths::Combine(TempDirPath, TEXT("ConvertTarget.pdf"));
-	FileManager.Copy(*ConvertTargetPath, *PDFFilePath);
-	if (!FileManager.FileExists(*ConvertTargetPath))
-	{
-		UE_LOG(PDFImporter, Error, TEXT("Couldn't copy pdf file"));
-		Failed.Broadcast();
-	}
-
 	//Ghostscriptを用いてPDFからjpg画像を作成
 	FPDFImporterModule& PDFImporterModule = FModuleManager::GetModuleChecked<FPDFImporterModule>(FName("PDFImporter"));
 
 	FString OutputPath = FPaths::Combine(TempDirPath, TEXT("%10d.jpg"));
-	bool bResult = PDFImporterModule.ConvertPdfToJpeg(ConvertTargetPath, OutputPath, Dpi, FirstPage, LastPage);
+	bool bResult = PDFImporterModule.ConvertPdfToJpeg(PDFFilePath, OutputPath, Dpi, FirstPage, LastPage, Locale);
 
 	//作成したjpg画像を読み込む
 	TArray<UTexture2D*> Buffer;

@@ -3,6 +3,7 @@
 #include "PDFImporter.h"
 #include "Misc/Paths.h"
 #include "GenericPlatform/GenericPlatformProcess.h"
+#include "Kismet/KismetInternationalizationLibrary.h"
 
 #include <string>
 
@@ -27,13 +28,10 @@ void FPDFImporterModule::StartupModule()
 	}
 
 	//関数ポインタを取得
-#pragma warning(push)
-#pragma warning( disable : 4191 )
 	CreateInstance = (CreateAPIInstance)FPlatformProcess::GetDllExport(APIModule, TEXT("gsapi_new_instance"));
 	DeleteInstance = (DeleteAPIInstance)FPlatformProcess::GetDllExport(APIModule, TEXT("gsapi_delete_instance"));
 	Init = (InitAPI)FPlatformProcess::GetDllExport(APIModule, TEXT("gsapi_init_with_args"));
 	Exit = (ExitAPI)FPlatformProcess::GetDllExport(APIModule, TEXT("gsapi_exit"));
-#pragma warning(pop)
 	if (CreateInstance == nullptr || DeleteInstance == nullptr || Init == nullptr || Exit == nullptr)
 	{
 		UE_LOG(PDFImporter, Fatal, TEXT("Failed to get Ghostscript function pointer"));
@@ -45,15 +43,13 @@ void FPDFImporterModule::ShutdownModule()
 	FPlatformProcess::FreeDllHandle(APIModule);
 }
 
-bool FPDFImporterModule::ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage)
+bool FPDFImporterModule::ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale)
 {
 	if (!(FirstPage > 0 && LastPage > 0 && FirstPage <= LastPage))
 	{
 		FirstPage = 1;
 		LastPage = INT_MAX;
 	}
-
-	FString ParamOutputPath(TEXT("-sOutputFile=") + OutputPath);
 
 	const char* Args[20] =
 	{
@@ -63,9 +59,9 @@ bool FPDFImporterModule::ConvertPdfToJpeg(const FString& InputPath, const FStrin
 
 		"-dPARANOIDSAFER",			//セーフモードで実行
 		"-dBATCH",					//Ghostscriptがインタラクティブモードにならないように
-		"-dNOPAUSE",					//ページごとの一時停止をしないように
+		"-dNOPAUSE",				//ページごとの一時停止をしないように
 		"-dNOPROMPT",				//コマンドプロンプトがでないように           
-		"-dMaxBitmap=500000000",		//パフォーマンスを向上させる
+		"-dMaxBitmap=500000000",	//パフォーマンスを向上させる
 		"-dNumRenderingThreads=4",	//マルチコアで実行
 
 		//出力画像のアンチエイリアスや解像度など
@@ -84,30 +80,47 @@ bool FPDFImporterModule::ConvertPdfToJpeg(const FString& InputPath, const FStrin
 		"", // 18 : 出力パス
 		""  // 19 : 入力パス
 	};
-	
-	std::wstring FirstPage_wstr(*FString(TEXT("-dFirstPage=") + FString::FromInt(FirstPage)));
-	std::string FirstPage_str(FirstPage_wstr.begin(), FirstPage_wstr.end());
-	Args[14] = FirstPage_str.c_str();
 
-	std::wstring LastPage_wstr(*FString(TEXT("-dLastPage=") + FString::FromInt(LastPage)));
-	std::string LastPage_str(LastPage_wstr.begin(), LastPage_wstr.end());
-	Args[15] = LastPage_str.c_str();
+	if (Locale != TEXT(""))
+	{
+		std::locale::global(std::locale(TCHAR_TO_ANSI(*Locale)));
+		UE_LOG(PDFImporter, Log, TEXT("The locale has been set : %s"), *Locale);
+	}	
 
-	std::wstring DpiX_wstr(*FString(TEXT("-dDEVICEXRESOLUTION=") + FString::FromInt(Dpi)));
-	std::string DpiX_str(DpiX_wstr.begin(), DpiX_wstr.end());
-	Args[16] = DpiX_str.c_str();
+	FString FirstPageTemp(TEXT("-dFirstPage=") + FString::FromInt(FirstPage));
+	int FirstPageSize = GetFStringSize(FirstPageTemp) + 1;
+	TArray<char> FirstPageBuffer("", FirstPageSize);
+	sprintf_s(FirstPageBuffer.GetData(), FirstPageSize, "%S", *FirstPageTemp);
+	Args[14] = FirstPageBuffer.GetData();
 
-	std::wstring DpiY_wstr(*FString(TEXT("-dDEVICEYRESOLUTION=") + FString::FromInt(Dpi)));
-	std::string DpiY_str(DpiY_wstr.begin(), DpiY_wstr.end());
-	Args[17] = DpiY_str.c_str();
+	FString LastPageTemp(TEXT("-dLastPage=") + FString::FromInt(LastPage));
+	int LastPageSize = GetFStringSize(LastPageTemp) + 1;
+	TArray<char> LastPageBuffer("", LastPageSize);
+	sprintf_s(LastPageBuffer.GetData(), LastPageSize, "%S", *LastPageTemp);
+	Args[15] = LastPageBuffer.GetData();
 
-	std::wstring OutputPath_wstr(*FString(TEXT("-sOutputFile=") + OutputPath));
-	std::string OutputPath_str(OutputPath_wstr.begin(), OutputPath_wstr.end());
-	Args[18] = OutputPath_str.c_str();
+	FString DpiXTemp(TEXT("-dDEVICEXRESOLUTION=") + FString::FromInt(Dpi));
+	int DpiXSize = GetFStringSize(DpiXTemp) + 1;
+	TArray<char> DpiXBuffer("", DpiXSize);
+	sprintf_s(DpiXBuffer.GetData(), DpiXSize, "%S", *DpiXTemp);
+	Args[16] = DpiXBuffer.GetData();
 
-	std::wstring InputPath_wstr(*InputPath);
-	std::string InputPath_str(InputPath_wstr.begin(), InputPath_wstr.end());
-	Args[19] = InputPath_str.c_str();
+	FString DpiYTemp(TEXT("-dDEVICEYRESOLUTION=") + FString::FromInt(Dpi));
+	int DpiYSize = GetFStringSize(DpiYTemp) + 1;
+	TArray<char> DpiYBuffer("", DpiYSize);
+	sprintf_s(DpiYBuffer.GetData(), DpiYSize, "%S", *DpiYTemp);
+	Args[17] = DpiYBuffer.GetData();
+
+	FString OutputPathTemp(TEXT("-sOutputFile=") + OutputPath);
+	int OutputPathSize = GetFStringSize(OutputPathTemp) + 1;
+	TArray<char> OutputPathBuffer("", OutputPathSize);
+	sprintf_s(OutputPathBuffer.GetData(), OutputPathSize, "%S", *OutputPathTemp);
+	Args[18] = OutputPathBuffer.GetData();
+
+	int InputPathSize = GetFStringSize(InputPath) + 1;
+	TArray<char> InputPathBuffer("", InputPathSize);
+	sprintf_s(InputPathBuffer.GetData(), InputPathSize, "%S", *InputPath);
+	Args[19] = InputPathBuffer.GetData();
 
 	//Ghostscriptのインスタンスを作成
 	void* APIInstance = nullptr;
@@ -116,7 +129,7 @@ bool FPDFImporterModule::ConvertPdfToJpeg(const FString& InputPath, const FStrin
 	{
 		//Ghostscriptを実行
 		int Result = Init(APIInstance, 20, (char**)Args);
-
+		
 		//Ghostscriptを終了
 		Exit(APIInstance);
 		DeleteInstance(APIInstance);
@@ -128,6 +141,44 @@ bool FPDFImporterModule::ConvertPdfToJpeg(const FString& InputPath, const FStrin
 
 	UE_LOG(PDFImporter, Error, TEXT("Failed to create Ghostscript instance"));
 	return false;
+}
+
+int FPDFImporterModule::GetFStringSize(const FString& InString)
+{
+	int Size = 0;
+
+	for (TCHAR Char : InString)
+	{
+		const char* Temp = TCHAR_TO_UTF8(*FString::Chr(Char));
+		uint8 Code = static_cast<uint8>(*Temp);
+
+		if ((Code >= 0x00) && (Code <= 0x7f))
+		{
+			Size += 1;
+		}
+		else if ((Code >= 0xc2) && (Code <= 0xdf))
+		{
+			Size += 2;
+		}
+		else if ((Code >= 0xe0) && (Code <= 0xef))
+		{
+			Size += 3;
+		}
+		else if ((Code >= 0xf0) && (Code <= 0xf7))
+		{
+			Size += 4;
+		}
+		else if ((Code >= 0xf8) && (Code <= 0xfb))
+		{
+			Size += 5;
+		}
+		else if ((Code >= 0xfc) && (Code <= 0xfd))
+		{
+			Size += 6;
+		}
+	}
+
+	return Size;
 }
 
 #undef LOCTEXT_NAMESPACE

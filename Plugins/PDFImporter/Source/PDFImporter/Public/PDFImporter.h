@@ -27,7 +27,11 @@ public:
 	virtual void ShutdownModule() override;
 
 	// Convert PDF to multiple jpeg images using Ghostscript API
-	bool ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage);
+	bool ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale);
+
+private:
+	// Get the size of FString data
+	int GetFStringSize(const FString& Text);
 };
 
 DEFINE_LOG_CATEGORY_STATIC(PDFImporter, Log, All);
