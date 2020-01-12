@@ -2,10 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Factories/Factory.h"
+#include "EditorReimportHandler.h"
 #include "PDFFactory.generated.h"
 
 UCLASS()
-class PDFIMPORTER_API UPDFFactory : public UFactory
+class PDFIMPORTER_API UPDFFactory : public UFactory, public FReimportHandler
 {
 	GENERATED_UCLASS_BODY()
 
@@ -24,4 +25,10 @@ public:
 		bool& bOutOperationCanceled
 	)override;
 	// End of UFactory interface
+
+	// FReimportHandler interface
+	virtual bool CanReimport(UObject* Obj, TArray<FString>& OutFilenames) override;
+	virtual void SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths) override;
+	virtual EReimportResult::Type Reimport(UObject* Obj) override;
+	// End of FReimportHandler interface
 };

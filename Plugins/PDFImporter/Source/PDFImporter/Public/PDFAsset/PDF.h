@@ -16,16 +16,22 @@ class PDFIMPORTER_API UPDF : public UObject
 	
 public:
 	// PDF file name
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PDF")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PDF")
 	FString FileName;
 
 	// PDF page textures
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PDF")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PDF")
 	TArray<class UTexture2D*> Pages;
 
 	// PDF resolution
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PDF")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PDF")
 	int Dpi;
+
+#if WITH_EDITORONLY_DATA
+	// Data for re-import
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "Reimport")
+	class UAssetImportData* AssetImportData;
+#endif
 
 private:
 	FString FilePath;
