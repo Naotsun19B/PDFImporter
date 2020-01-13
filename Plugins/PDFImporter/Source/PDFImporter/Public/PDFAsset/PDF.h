@@ -33,9 +33,6 @@ public:
 	class UAssetImportData* AssetImportData;
 #endif
 
-private:
-	FString FilePath;
-
 public:
 	// Get the texture of the specified page
 	UFUNCTION(BlueprintCallable, Category = "PDF")

@@ -1,5 +1,5 @@
 #include "PDFAsset/PDFFactory.h"
-#include "GhostscriptCore.h"
+#include "PDFImporter.h"
 #include "PDFAsset/PDF.h"
 #include "HAL/FileManager.h"
 #include "EditorFramework/AssetImportData.h"
@@ -35,7 +35,8 @@ UObject* UPDFFactory::FactoryCreateFile(
 )
 {
 	UPDF* NewPDF = CastChecked<UPDF>(StaticConstructObject_Internal(InClass, InParent, InName, Flags));
-	UPDF* LoadedPDF = UGhostscriptCore::Get()->ConvertPdfToPdfAsset(Filename, 150, 0, 0, "ja");
+	FPDFImporterModule& PDFImporterModule = FModuleManager::LoadModuleChecked<FPDFImporterModule>(FName("PDFImporter"));
+	UPDF* LoadedPDF = PDFImporterModule.ConvertPdfToPdfAsset(Filename, 150, 0, 0, TEXT("ja"));
 
 	if (LoadedPDF != nullptr)
 	{
@@ -44,7 +45,7 @@ UObject* UPDFFactory::FactoryCreateFile(
 		NewPDF->Dpi = LoadedPDF->Dpi;
 
 		NewPDF->AssetImportData = NewObject<UAssetImportData>();
-		FAssetImportInfo::FSourceFile NewSourceFile(Filename, IFileManager::Get().GetTimeStamp(*CurrentFilename));
+		FAssetImportInfo::FSourceFile NewSourceFile(Filename, IFileManager::Get().GetTimeStamp(*Filename));
 		NewPDF->AssetImportData->SourceData.SourceFiles.Add(NewSourceFile);
 	}
 
