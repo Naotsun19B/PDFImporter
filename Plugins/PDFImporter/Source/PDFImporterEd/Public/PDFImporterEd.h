@@ -7,6 +7,9 @@
 class FPDFImporterEdModule : public IModuleInterface
 {
 public:
+	TSharedPtr<class FAssetTypeActions_PDF> PDF_AssetTypeActions;
+
+public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;

@@ -24,6 +24,7 @@ public:
 	FFailedToLoadPin Failed;
 
 private:
+	TSharedPtr<class FGhostscriptCore> GhostscriptCore;
 	const UObject* WorldContextObject;
 	bool bIsActive;
 

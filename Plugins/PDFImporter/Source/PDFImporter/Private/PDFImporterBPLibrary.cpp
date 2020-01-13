@@ -17,12 +17,20 @@ void UPDFImporterBPLibrary::OpenPDFDialog(const FString& DefaultPath, EOpenPDFDi
 {
 	TArray<FString> FileNameTemp;
 	OutputPin = ExecOpenFileDialog(DefaultPath, FileNameTemp, false);
-	FileName = FileNameTemp[0];
+	if (OutputPin == EOpenPDFDialogResult::Successful)
+	{
+		FileName = FileNameTemp[0];
+	}
 }
 
 void UPDFImporterBPLibrary::OpenPDFDialogMultiple(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, TArray<FString>& FileNames)
 {
 	OutputPin = ExecOpenFileDialog(DefaultPath, FileNames, true);
+}
+
+FString UPDFImporterBPLibrary::ConvertFPageRangeToFString(FPageRange InPageRange)
+{
+	return FString::FromInt(InPageRange.FirstPage) + TEXT(" - ") + FString::FromInt(InPageRange.LastPage);
 }
 
 void* UPDFImporterBPLibrary::GetWindowHandle()

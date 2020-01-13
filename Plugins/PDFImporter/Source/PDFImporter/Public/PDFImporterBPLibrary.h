@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "PDF.h"
 #include "PDFImporterBPLibrary.generated.h"
 
 /* 
@@ -37,11 +38,15 @@ class UPDFImporterBPLibrary : public UBlueprintFunctionLibrary
 public:
 	// Get the file path of the selected PDF file
 	UFUNCTION(BlueprintCallable, Category = "PDFImporter | OpenFileDialog", meta = (AdvancedDisplay = "DefaultPath", DisplayName = "Open PDF Dialog", ExpandEnumAsExecs = "OutputPin"))
-		static void OpenPDFDialog(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, FString& FileName);
+	static void OpenPDFDialog(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, FString& FileName);
 
 	// Get the file paths of the selected PDF files
 	UFUNCTION(BlueprintCallable, Category = "PDFImporter | OpenFileDialog", meta = (AdvancedDisplay = "DefaultPath", DisplayName = "Open PDF Dialog Multiple", ExpandEnumAsExecs = "OutputPin"))
-		static void OpenPDFDialogMultiple(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, TArray<FString>& FileNames);
+	static void OpenPDFDialogMultiple(const FString& DefaultPath, EOpenPDFDialogResult& OutputPin, TArray<FString>& FileNames);
+
+	// Convert FPageRange to FString
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast, DisplayName = "ToString(PageRange)", CompactNodeTitle = "->"))
+	static FString ConvertFPageRangeToFString(FPageRange InPageRange);
 
 private:
 	// Get window handle

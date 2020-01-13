@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ConvertPDFtoTexture2D.h"
-#include "PDFImporter.h"
-#include "PDFAsset/PDF.h"
+#include "GhostscriptCore.h"
+#include "PDF.h"
 #include "AsyncExecTask.h"
 #include "Misc/Paths.h"
 
@@ -10,6 +10,8 @@ UConvertPDFtoTexture2D::UConvertPDFtoTexture2D(const FObjectInitializer& ObjectI
 	: Super(ObjectInitializer), WorldContextObject(nullptr), bIsActive(false), 
 	  PDFFilePath(""), Dpi(0), FirstPage(0), LastPage(0), Locale("")
 {
+	FPDFImporterModule& PDFImporterModule = FModuleManager::LoadModuleChecked<FPDFImporterModule>(FName("PDFImporter"));
+	GhostscriptCore = PDFImporterModule.GetGhostscriptCore();
 }
 
 UConvertPDFtoTexture2D* UConvertPDFtoTexture2D::ConvertPDFtoTexture2D(
@@ -50,8 +52,7 @@ void UConvertPDFtoTexture2D::Activate()
 
 void UConvertPDFtoTexture2D::ExecConversion()
 {
-	FPDFImporterModule& PDFImporterModule = FModuleManager::LoadModuleChecked<FPDFImporterModule>(FName("PDFImporter"));
-	UPDF* PDFAsset = PDFImporterModule.ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale);
+	UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale);
 	if (PDFAsset != nullptr)
 	{
 		Completed.Broadcast(PDFAsset);

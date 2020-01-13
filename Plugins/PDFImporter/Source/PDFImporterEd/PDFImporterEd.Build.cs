@@ -17,6 +17,8 @@ public class PDFImporterEd : ModuleRules
                 "InputCore",
                 "SlateCore",
                 "PDFImporter",
+                "UnrealEd",
+                "AssetTools",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
