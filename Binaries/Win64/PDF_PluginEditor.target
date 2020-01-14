@@ -4226,7 +4226,7 @@
 			"Type": "UFS"
 		},
 		{
-			"Path": "$(ProjectDir)/ThirdParty/Ghostscript/Win64/gsdll.dll",
+			"Path": "$(ProjectDir)/Plugins/PDFImporter/ThirdParty/Win64/gsdll.dll",
 			"Type": "NonUFS"
 		},
 		{

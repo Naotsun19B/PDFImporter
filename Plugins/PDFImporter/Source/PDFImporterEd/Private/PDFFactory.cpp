@@ -42,6 +42,7 @@ UObject* UPDFFactory::FactoryCreateFile(
 
 	if (LoadedPDF != nullptr)
 	{
+		NewPDF->SourceDirectory = LoadedPDF->SourceDirectory;
 		NewPDF->PageRange = LoadedPDF->PageRange;
 		NewPDF->Dpi = LoadedPDF->Dpi;
 		NewPDF->Pages = LoadedPDF->Pages;

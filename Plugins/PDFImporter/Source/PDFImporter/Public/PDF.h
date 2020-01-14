@@ -26,8 +26,12 @@ UCLASS(BlueprintType)
 class PDFIMPORTER_API UPDF : public UObject
 {
 	GENERATED_BODY()
-	
+
 public:
+	// PDF image file source path
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PDF")
+	FString SourceDirectory;
+
 	// PDF page range
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PDF")
 	FPageRange PageRange;
@@ -54,4 +58,7 @@ public:
 	// Get number of pages in PDF
 	UFUNCTION(BlueprintCallable, Category = "PDF")
 	int GetPageCount() const { return Pages.Num(); }
+
+public:
+	virtual void Serialize(FArchive& Ar) override;
 };

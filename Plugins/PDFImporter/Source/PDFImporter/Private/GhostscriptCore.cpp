@@ -13,7 +13,7 @@
 FGhostscriptCore::FGhostscriptCore()
 {
 	//dllファイルのパスを取得
-	FString GhostscriptDllPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("ThirdParty"), TEXT("Ghostscript")));
+	FString GhostscriptDllPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("PDFImporter"), TEXT("ThirdParty")));
 #ifdef _WIN64
 	GhostscriptDllPath = FPaths::Combine(GhostscriptDllPath, TEXT("Win64"));
 #elif _WIN32
@@ -53,7 +53,7 @@ FGhostscriptCore::~FGhostscriptCore()
 UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale)
 {
 	IFileManager& FileManager = IFileManager::Get();
-
+	
 	//PDFがあるか確認
 	if (!FileManager.FileExists(*InputPath))
 	{
@@ -72,51 +72,17 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 	UE_LOG(PDFImporter, Log, TEXT("A working directory has been created (%s)"), *TempDirPath);
 
 	//Ghostscriptを用いてPDFからjpg画像を作成
-	FString OutputPath = FPaths::Combine(TempDirPath, TEXT("%10d.jpg"));
-	bool bResult = ConvertPdfToJpeg(InputPath, OutputPath, Dpi, FirstPage, LastPage, Locale);
+	FString OutputPath = FPaths::Combine(TempDirPath, FPaths::GetBaseFilename(InputPath) + TEXT("%010d.jpg"));
 
-	//作成したjpg画像を読み込む
+	UPDF* PDFAsset = nullptr;
 	TArray<UTexture2D*> Buffer;
-	if (bResult)
+	if (ConvertPdfToJpeg(InputPath, OutputPath, Dpi, FirstPage, LastPage, Locale))
 	{
-		//画像のファイルパスを取得
-		TArray<FString> PageNames;
-		FileManager.FindFiles(PageNames, *TempDirPath, L"jpg");
+		//作成したjpg画像を読み込む
+		LoadTexture2DsFromDirectory(TempDirPath, Buffer);
 
-		//画像の読み込み
-		UTexture2D* TextureTemp;
-		for (FString PageName : PageNames)
-		{
-			if (LoadTexture2DFromFile(FPaths::Combine(TempDirPath, PageName), TextureTemp))
-			{
-				Buffer.Add(TextureTemp);
-			}
-			else
-			{
-				break;
-			}
-		}
-	}
-
-	//作業用ディレクトリを削除
-	if (FileManager.DirectoryExists(*TempDirPath))
-	{
-		if (FileManager.DeleteDirectory(*TempDirPath, false, true))
-		{
-			UE_LOG(PDFImporter, Log, TEXT("The directory used for work was successfully deleted (%s)"), *TempDirPath);
-		}
-		else
-		{
-			UE_LOG(PDFImporter, Error, TEXT("The directory used for work could not be deleted (%s)"), *TempDirPath);
-		}
-	}
-
-	if (bResult)
-	{
 		//PDFアセットを作成
-		UPDF* PDFAsset = NewObject<UPDF>();
-		PDFAsset->Pages = Buffer;
-		PDFAsset->Dpi = Dpi;
+		PDFAsset = NewObject<UPDF>();
 
 		if (!(FirstPage > 0 && LastPage > 0 && FirstPage <= LastPage))
 		{
@@ -124,14 +90,69 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 			LastPage = PDFAsset->Pages.Num();
 		}
 
+		PDFAsset->SourceDirectory = TempDirPath;
 		PDFAsset->PageRange = FPageRange(FirstPage, LastPage);
+		PDFAsset->Dpi = Dpi;
+		PDFAsset->Pages = Buffer;
+	}
 
-		return PDFAsset;
-	}
-	else
+	if (FileManager.DirectoryExists(*TempDirPath))
 	{
-		return nullptr;
+		FileManager.DeleteDirectory(*TempDirPath);
+		UE_LOG(PDFImporter, Log, TEXT("Successfully deleted working directory (%s)"), *TempDirPath);
 	}
+
+	return PDFAsset;
+}
+
+bool FGhostscriptCore::LoadTexture2DsFromDirectory(const FString& DirectoryPath, TArray<class UTexture2D*>& Textures)
+{
+	//画像のファイルパスを取得
+	TArray<FString> PageNames;
+	IFileManager::Get().FindFiles(PageNames, *DirectoryPath, L"jpg");
+	Textures.Reset();
+
+	for (const FString& PageName : PageNames)
+	{
+		//配列に画像を読み込む
+		TArray<uint8> RawFileData;
+		if (!FFileHelper::LoadFileToArray(RawFileData, *FPaths::Combine(DirectoryPath, PageName)))
+		{
+			return false;
+		}
+
+		if (ImageWrapper.IsValid() && ImageWrapper->SetCompressed(RawFileData.GetData(), RawFileData.Num()))
+		{
+			const TArray<uint8>* UncompressedRawData = nullptr;
+			if (ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData))
+			{
+				//Texture2Dを作成
+				UTexture2D* LoadedTexture = UTexture2D::CreateTransient(ImageWrapper->GetWidth(), ImageWrapper->GetHeight(), PF_B8G8R8A8);
+				if (!LoadedTexture)
+				{
+					return false;
+				}
+				LoadedTexture->PlatformData->NumSlices = 1;
+
+				void* TextureData = LoadedTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+				FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
+				LoadedTexture->PlatformData->Mips[0].BulkData.Unlock();
+				LoadedTexture->UpdateResource();
+
+				Textures.Add(LoadedTexture);
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale)
@@ -232,32 +253,6 @@ bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString&
 
 	UE_LOG(PDFImporter, Error, TEXT("Failed to create Ghostscript instance"));
 	return false;
-}
-
-bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, UTexture2D* &LoadedTexture)
-{
-	//配列に画像を読み込む
-	TArray<uint8> RawFileData;
-	if (!FFileHelper::LoadFileToArray(RawFileData, *FilePath)) return false;
-
-	if (ImageWrapper.IsValid() && ImageWrapper->SetCompressed(RawFileData.GetData(), RawFileData.Num()))
-	{
-		const TArray<uint8>* UncompressedRawData = NULL;
-		if (ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData))
-		{
-			//Texture2Dを作成
-			LoadedTexture = nullptr;
-			LoadedTexture = UTexture2D::CreateTransient(ImageWrapper->GetWidth(), ImageWrapper->GetHeight(), PF_B8G8R8A8);
-			if (!LoadedTexture) return false;
-
-			void* TextureData = LoadedTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
-			FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
-			LoadedTexture->PlatformData->Mips[0].BulkData.Unlock();
-			LoadedTexture->UpdateResource();
-		}
-	}
-
-	return true;
 }
 
 int FGhostscriptCore::GetFStringSize(const FString& InString)

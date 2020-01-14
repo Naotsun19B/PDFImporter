@@ -34,7 +34,7 @@ public class PDFImporter : ModuleRules
 			}
 			);
 
-        string GhostscriptPath = Path.Combine(ModuleDirectory, "..", "..", "..", "..", "ThirdParty", "Ghostscript");
+        string GhostscriptPath = Path.Combine(ModuleDirectory, "..", "..", "ThirdParty");
         string Platform = string.Empty;
         switch(Target.Platform)
         {
