@@ -1,10 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PDF.h"
-#include "GhostscriptCore.h"
+#include "PDFImporter.h"
 #include "Misc/Paths.h"
+#include "Engine//Texture2D.h"
 #include "Serialization/CustomVersion.h"
+
+#if WITH_EDITORONLY_DATA
 #include "EditorFramework/AssetImportData.h"
+#endif
 
 static const int Version = 1;
 static const FGuid GUID(2020, 1, 13, 16);
@@ -33,18 +37,46 @@ void UPDF::Serialize(FArchive& Ar)
 	Ar.UsingCustomVersion(GUID);
 	if (Ar.IsSaving() || (Ar.IsLoading() && (Version <= Ar.CustomVer(GUID))))
 	{
-		Ar << SourceDirectory << PageRange.FirstPage << PageRange.LastPage << Dpi;
-
-		if (Ar.IsLoading())
-		{
-			FPDFImporterModule& PDFImporterModule = FModuleManager::LoadModuleChecked<FPDFImporterModule>(FName("PDFImporter"));
-			TSharedPtr<FGhostscriptCore> GhostscriptCore = PDFImporterModule.GetGhostscriptCore();
-
-			FString DirectoryFullPath = FPaths::Combine(FPaths::ProjectPluginsDir(), SourceDirectory);
-			DirectoryFullPath = FPaths::ConvertRelativePathToFull(DirectoryFullPath);
-
-			GhostscriptCore->LoadTexture2DsFromDirectory(DirectoryFullPath, Pages);
-		}
+		Ar << PageRange.FirstPage << PageRange.LastPage << Dpi << Pages;
+#if WITH_EDITORONLY_DATA
+		Ar << Filename << TimeStamp;
+#endif
 	}
 }
+
+void UPDF::PostInitProperties()
+{
+#if WITH_EDITORONLY_DATA
+	if (!HasAnyFlags(RF_ClassDefaultObject | RF_NeedLoad))
+	{
+		AssetImportData = NewObject<UAssetImportData>(this, TEXT("AssetImportData"));
+	}
+#endif
+	Super::PostInitProperties();
+}
+
+void UPDF::PostLoad()
+{
+	Super::PostLoad();
+
+#if WITH_EDITORONLY_DATA
+	if (AssetImportData == nullptr)
+	{
+		AssetImportData = NewObject<UAssetImportData>(this, TEXT("AssetImportData"));
+		AssetImportData->SourceData.Insert({ Filename, TimeStamp });
+	}
+#endif
+}
+
+#if WITH_EDITORONLY_DATA
+void UPDF::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
+{
+	if (AssetImportData)
+	{
+		OutTags.Add(FAssetRegistryTag(SourceFileTagName(), AssetImportData->GetSourceData().ToJson(), FAssetRegistryTag::TT_Hidden));
+	}
+
+	Super::GetAssetRegistryTags(OutTags);
+}
+#endif
 

@@ -28,10 +28,6 @@ class PDFIMPORTER_API UPDF : public UObject
 	GENERATED_BODY()
 
 public:
-	// PDF image file source path
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PDF")
-	FString SourceDirectory;
-
 	// PDF page range
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PDF")
 	FPageRange PageRange;
@@ -45,9 +41,15 @@ public:
 	TArray<class UTexture2D*> Pages;
 
 #if WITH_EDITORONLY_DATA
-	// Data for re-import
-	UPROPERTY(VisibleAnywhere, Instanced, Category = "Reimport")
+	// Data for import setting
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "ImportSettings")
 	class UAssetImportData* AssetImportData;
+
+	UPROPERTY()
+	FString Filename;
+
+	UPROPERTY()
+	FDateTime TimeStamp;
 #endif
 
 public:
@@ -60,5 +62,12 @@ public:
 	int GetPageCount() const { return Pages.Num(); }
 
 public:
+	// UObject interface
 	virtual void Serialize(FArchive& Ar) override;
+	virtual void PostInitProperties() override;
+	virtual void PostLoad() override;
+#if WITH_EDITORONLY_DATA
+	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+#endif
+	// End of UObject interface
 };

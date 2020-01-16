@@ -45,14 +45,14 @@ void UConvertPdfToPdfAsset::Activate()
 		return;
 	}
 	
-	//変換開始
+	// 変換開始
 	auto ConvertTask = new FAutoDeleteAsyncTask<FAsyncExecTask>([this]() { ExecConversion(); });
 	ConvertTask->StartBackgroundTask();
 }
 
 void UConvertPdfToPdfAsset::ExecConversion()
 {
-	UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale);
+	UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale, false);
 	if (PDFAsset != nullptr)
 	{
 		Completed.Broadcast(PDFAsset);

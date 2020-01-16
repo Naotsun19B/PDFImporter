@@ -38,18 +38,20 @@ UObject* UPDFFactory::FactoryCreateFile(
 )
 {
 	UPDF* NewPDF = CastChecked<UPDF>(StaticConstructObject_Internal(InClass, InParent, InName, Flags));
-	UPDF* LoadedPDF = GhostscriptCore->ConvertPdfToPdfAsset(Filename, 150, 0, 0, TEXT("ja"));
+	UPDF* LoadedPDF = GhostscriptCore->ConvertPdfToPdfAsset(Filename, 150, 0, 0, TEXT("ja"), true);
 
 	if (LoadedPDF != nullptr)
 	{
-		NewPDF->SourceDirectory = LoadedPDF->SourceDirectory;
 		NewPDF->PageRange = LoadedPDF->PageRange;
 		NewPDF->Dpi = LoadedPDF->Dpi;
 		NewPDF->Pages = LoadedPDF->Pages;
 
+#if WITH_EDITORONLY_DATA
 		NewPDF->AssetImportData = NewObject<UAssetImportData>();
-		FAssetImportInfo::FSourceFile NewSourceFile(Filename, IFileManager::Get().GetTimeStamp(*Filename));
-		NewPDF->AssetImportData->SourceData.SourceFiles.Add(NewSourceFile);
+		NewPDF->AssetImportData->SourceData.Insert({ Filename, IFileManager::Get().GetTimeStamp(*Filename) });
+		NewPDF->Filename = Filename;
+		NewPDF->TimeStamp = IFileManager::Get().GetTimeStamp(*Filename);
+#endif
 	}
 
 	return NewPDF;

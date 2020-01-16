@@ -5,6 +5,7 @@
 #include "Misc/FileHelper.h"
 #include "GenericPlatform/GenericPlatformProcess.h"
 #include "HAL/FileManager.h"
+#include "AssetRegistryModule.h"
 #include "IImageWrapperModule.h"
 #include "IImageWrapper.h"
 
@@ -12,7 +13,7 @@
 
 FGhostscriptCore::FGhostscriptCore()
 {
-	//dllファイルのパスを取得
+	// dllファイルのパスを取得
 	FString GhostscriptDllPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("PDFImporter"), TEXT("ThirdParty")));
 #ifdef _WIN64
 	GhostscriptDllPath = FPaths::Combine(GhostscriptDllPath, TEXT("Win64"));
@@ -21,14 +22,14 @@ FGhostscriptCore::FGhostscriptCore()
 #endif
 	GhostscriptDllPath = FPaths::Combine(GhostscriptDllPath, TEXT("gsdll.dll"));
 
-	//モジュールをロード
+	// モジュールをロード
 	GhostscriptModule = FPlatformProcess::GetDllHandle(*GhostscriptDllPath);
 	if (GhostscriptModule == nullptr)
 	{
 		UE_LOG(PDFImporter, Fatal, TEXT("Failed to load Ghostscript module"));
 	}
 
-	//関数ポインタを取得
+	// 関数ポインタを取得
 	CreateInstance = (CreateAPIInstance)FPlatformProcess::GetDllExport(GhostscriptModule, TEXT("gsapi_new_instance"));
 	DeleteInstance = (DeleteAPIInstance)FPlatformProcess::GetDllExport(GhostscriptModule, TEXT("gsapi_delete_instance"));
 	Init = (InitAPI)FPlatformProcess::GetDllExport(GhostscriptModule, TEXT("gsapi_init_with_args"));
@@ -50,18 +51,18 @@ FGhostscriptCore::~FGhostscriptCore()
 	UE_LOG(PDFImporter, Log, TEXT("Ghostscript dll unloaded"));
 }
 
-UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale)
+UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale, bool bMakeAsset)
 {
 	IFileManager& FileManager = IFileManager::Get();
 	
-	//PDFがあるか確認
+	// PDFがあるか確認
 	if (!FileManager.FileExists(*InputPath))
 	{
 		UE_LOG(PDFImporter, Error, TEXT("File not found : %s"), *InputPath);
 		return nullptr;
 	}
 
-	//作業用のディレクトリを作成
+	// 作業用のディレクトリを作成
 	FString TempDirPath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("ConvertTemp"));
 	TempDirPath = FPaths::ConvertRelativePathToFull(TempDirPath);
 	if (FileManager.DirectoryExists(*TempDirPath))
@@ -71,88 +72,59 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 	FileManager.MakeDirectory(*TempDirPath);
 	UE_LOG(PDFImporter, Log, TEXT("A working directory has been created (%s)"), *TempDirPath);
 
-	//Ghostscriptを用いてPDFからjpg画像を作成
+	// Ghostscriptを用いてPDFからjpg画像を作成
 	FString OutputPath = FPaths::Combine(TempDirPath, FPaths::GetBaseFilename(InputPath) + TEXT("%010d.jpg"));
-
+	TArray<UTexture2D*> Buffer; 
 	UPDF* PDFAsset = nullptr;
-	TArray<UTexture2D*> Buffer;
+
 	if (ConvertPdfToJpeg(InputPath, OutputPath, Dpi, FirstPage, LastPage, Locale))
 	{
-		//作成したjpg画像を読み込む
-		LoadTexture2DsFromDirectory(TempDirPath, Buffer);
-
-		//PDFアセットを作成
-		PDFAsset = NewObject<UPDF>();
-
-		if (!(FirstPage > 0 && LastPage > 0 && FirstPage <= LastPage))
+		// 画像のファイルパスを取得
+		TArray<FString> PageNames;
+		IFileManager::Get().FindFiles(PageNames, *TempDirPath, L"jpg");
+		
+		// 作成したjpg画像を読み込む
+		UTexture2D* TextureTemp;
+		for (const FString& PageName : PageNames)
 		{
-			FirstPage = 1;
-			LastPage = PDFAsset->Pages.Num();
+			bool bResult = false;
+			if (bMakeAsset)
+			{
+				bResult = CreateTextureAssetFromFile(FPaths::Combine(TempDirPath, PageName), TextureTemp);
+			}
+			else
+			{
+				bResult = LoadTexture2DFromFile(FPaths::Combine(TempDirPath, PageName), TextureTemp);
+			}
+			
+			if (bResult)
+			{
+				Buffer.Add(TextureTemp);
+			}
 		}
 
-		PDFAsset->SourceDirectory = TempDirPath;
+		// PDFアセットを作成
+		PDFAsset = NewObject<UPDF>();
+
+		if (FirstPage <= 0 || LastPage <= 0 || FirstPage > LastPage)
+		{
+			FirstPage = 1;
+			LastPage = Buffer.Num();
+		}
+
 		PDFAsset->PageRange = FPageRange(FirstPage, LastPage);
 		PDFAsset->Dpi = Dpi;
 		PDFAsset->Pages = Buffer;
 	}
 
+	// 作業ディレクトリを削除
 	if (FileManager.DirectoryExists(*TempDirPath))
 	{
-		FileManager.DeleteDirectory(*TempDirPath);
+		FileManager.DeleteDirectory(*TempDirPath, true, true);
 		UE_LOG(PDFImporter, Log, TEXT("Successfully deleted working directory (%s)"), *TempDirPath);
 	}
 
 	return PDFAsset;
-}
-
-bool FGhostscriptCore::LoadTexture2DsFromDirectory(const FString& DirectoryPath, TArray<class UTexture2D*>& Textures)
-{
-	//画像のファイルパスを取得
-	TArray<FString> PageNames;
-	IFileManager::Get().FindFiles(PageNames, *DirectoryPath, L"jpg");
-	Textures.Reset();
-
-	for (const FString& PageName : PageNames)
-	{
-		//配列に画像を読み込む
-		TArray<uint8> RawFileData;
-		if (!FFileHelper::LoadFileToArray(RawFileData, *FPaths::Combine(DirectoryPath, PageName)))
-		{
-			return false;
-		}
-
-		if (ImageWrapper.IsValid() && ImageWrapper->SetCompressed(RawFileData.GetData(), RawFileData.Num()))
-		{
-			const TArray<uint8>* UncompressedRawData = nullptr;
-			if (ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData))
-			{
-				//Texture2Dを作成
-				UTexture2D* LoadedTexture = UTexture2D::CreateTransient(ImageWrapper->GetWidth(), ImageWrapper->GetHeight(), PF_B8G8R8A8);
-				if (!LoadedTexture)
-				{
-					return false;
-				}
-				LoadedTexture->PlatformData->NumSlices = 1;
-
-				void* TextureData = LoadedTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
-				FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
-				LoadedTexture->PlatformData->Mips[0].BulkData.Unlock();
-				LoadedTexture->UpdateResource();
-
-				Textures.Add(LoadedTexture);
-			}
-			else
-			{
-				return false;
-			}
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	return true;
 }
 
 bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale)
@@ -165,25 +137,25 @@ bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString&
 
 	const char* Args[20] =
 	{
-		//Ghostscriptが標準出力に情報を出力しないように
+		// Ghostscriptが標準出力に情報を出力しないように
 		"-q",
 		"-dQUIET",
 
-		"-dPARANOIDSAFER",			//セーフモードで実行
-		"-dBATCH",					//Ghostscriptがインタラクティブモードにならないように
-		"-dNOPAUSE",				//ページごとの一時停止をしないように
-		"-dNOPROMPT",				//コマンドプロンプトがでないように           
-		"-dMaxBitmap=500000000",	//パフォーマンスを向上させる
-		"-dNumRenderingThreads=4",	//マルチコアで実行
+		"-dPARANOIDSAFER",			// セーフモードで実行
+		"-dBATCH",					// Ghostscriptがインタラクティブモードにならないように
+		"-dNOPAUSE",				// ページごとの一時停止をしないように
+		"-dNOPROMPT",				// コマンドプロンプトがでないように           
+		"-dMaxBitmap=500000000",	// パフォーマンスを向上させる
+		"-dNumRenderingThreads=4",	// マルチコアで実行
 
-		//出力画像のアンチエイリアスや解像度など
+		// 出力画像のアンチエイリアスや解像度など
 		"-dAlignToPixels=0",
 		"-dGridFitTT=0",
 		"-dTextAlphaBits=4",
 		"-dGraphicsAlphaBits=4",
 
-		"-sDEVICE=jpeg",	//jpeg形式で出力
-		"-sPAPERSIZE=a7",	//紙のサイズ
+		"-sDEVICE=jpeg",	// jpeg形式で出力
+		"-sPAPERSIZE=a7",	// 紙のサイズ
 
 		"",	// 14 : 始めのページを指定
 		"",	// 15 : 終わりのページを指定
@@ -234,15 +206,15 @@ bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString&
 	sprintf_s(InputPathBuffer.GetData(), InputPathSize, "%S", *InputPath);
 	Args[19] = InputPathBuffer.GetData();
 
-	//Ghostscriptのインスタンスを作成
+	// Ghostscriptのインスタンスを作成
 	void* GhostscriptInstance = nullptr;
 	CreateInstance(&GhostscriptInstance, 0);
 	if (GhostscriptInstance != nullptr)
 	{
-		//Ghostscriptを実行
+		// Ghostscriptを実行
 		int Result = Init(GhostscriptInstance, 20, (char**)Args);
 
-		//Ghostscriptを終了
+		// Ghostscriptを終了
 		Exit(GhostscriptInstance);
 		DeleteInstance(GhostscriptInstance);
 
@@ -250,8 +222,113 @@ bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString&
 
 		return Result == 0;
 	}
+	else
+	{
+		UE_LOG(PDFImporter, Error, TEXT("Failed to create Ghostscript instance"));
+		return false;
+	}
+}
 
-	UE_LOG(PDFImporter, Error, TEXT("Failed to create Ghostscript instance"));
+bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture)
+{
+	// 画像データを読み込む
+	TArray<uint8> RawFileData;
+	if (FFileHelper::LoadFileToArray(RawFileData, *FilePath) &&
+		ImageWrapper.IsValid() && 
+		ImageWrapper->SetCompressed(RawFileData.GetData(), RawFileData.Num())
+		)
+	{
+		// 非圧縮の画像データを取得
+		const TArray<uint8>* UncompressedRawData = nullptr;
+		if (ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData))
+		{
+			// Texture2Dを作成
+			UTexture2D* NewTexture = UTexture2D::CreateTransient(ImageWrapper->GetWidth(), ImageWrapper->GetHeight(), PF_B8G8R8A8);
+			if (!NewTexture)
+			{
+				return false;
+			}
+
+			// ピクセルデータをテクスチャに書き込む
+			void* TextureData = NewTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+			FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
+			NewTexture->PlatformData->Mips[0].BulkData.Unlock();
+			NewTexture->UpdateResource();
+
+			LoadedTexture = NewTexture;
+
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture)
+{
+	// 画像データを読み込む
+	TArray<uint8> RawFileData;
+	if (FFileHelper::LoadFileToArray(RawFileData, *FilePath))
+	{
+		// 非圧縮の画像データを取得
+		const TArray<uint8>* UncompressedRawData = nullptr;
+		if (ImageWrapper.IsValid() &&
+			ImageWrapper->SetCompressed(RawFileData.GetData(), RawFileData.Num()) &&
+			ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData)
+			)
+		{
+			FString Filename = FPaths::GetBaseFilename(FilePath);
+			Filename = Filename.Left(Filename.Len() - 10);
+			int Width = ImageWrapper->GetWidth();
+			int Height = ImageWrapper->GetHeight();
+
+			// パッケージを作成
+			FString PackagePath(TEXT("/PDFImporter/") + Filename + TEXT("/"));
+			FString AbsolutePackagePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("PDFImporter"), TEXT("Content")) + TEXT("/") + Filename + TEXT("/");
+
+			FPackageName::RegisterMountPoint(PackagePath, AbsolutePackagePath);
+
+			PackagePath += Filename;
+
+			UPackage* Package = CreatePackage(nullptr, *PackagePath);
+			Package->FullyLoad();
+
+			// テクスチャを作成
+			FName TextureName = MakeUniqueObjectName(Package, UTexture2D::StaticClass(), FName(*Filename));
+			UTexture2D* NewTexture = NewObject<UTexture2D>(Package, TextureName, RF_Public | RF_Standalone);
+
+			// テクスチャの設定
+			NewTexture->PlatformData = new FTexturePlatformData();
+			NewTexture->PlatformData->SizeX = Width;
+			NewTexture->PlatformData->SizeY = Height;
+			NewTexture->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
+			NewTexture->NeverStream = false;
+
+			// ピクセルデータをテクスチャに書き込む
+			FTexture2DMipMap* Mip = new FTexture2DMipMap();
+			NewTexture->PlatformData->Mips.Add(Mip);
+			Mip->SizeX = Width;
+			Mip->SizeY = Height;
+			Mip->BulkData.Lock(LOCK_READ_WRITE);
+			uint8* TextureData = (uint8*)Mip->BulkData.Realloc(UncompressedRawData->Num());
+			FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
+			Mip->BulkData.Unlock();
+
+			// テクスチャを更新
+			NewTexture->AddToRoot();
+			NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedRawData->GetData());
+			NewTexture->UpdateResource();
+
+			// パッケージを保存
+			Package->MarkPackageDirty();
+			FAssetRegistryModule::AssetCreated(NewTexture);
+			LoadedTexture = NewTexture;
+
+			FString PackageFilename = FPackageName::LongPackageNameToFilename(PackagePath, FPackageName::GetAssetPackageExtension());
+			return UPackage::SavePackage(Package, NewTexture, RF_Public | RF_Standalone, *PackageFilename, GError, nullptr, true, true, SAVE_NoError);
+		}
+	}
+
 	return false;
 }
 

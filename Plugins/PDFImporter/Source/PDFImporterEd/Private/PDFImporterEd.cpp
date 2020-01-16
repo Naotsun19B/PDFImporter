@@ -7,7 +7,7 @@
 
 void FPDFImporterEdModule::StartupModule()
 {
-	//PDFアセットのAssetTypeActionsをAssetToolsモジュールに登録
+	// PDFアセットのAssetTypeActionsをAssetToolsモジュールに登録
 	PDF_AssetTypeActions = MakeShareable(new FAssetTypeActions_PDF);
 	FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get().RegisterAssetTypeActions(PDF_AssetTypeActions.ToSharedRef());
 }

@@ -35,7 +35,7 @@ FString UPDFImporterBPLibrary::ConvertFPageRangeToFString(FPageRange InPageRange
 
 void* UPDFImporterBPLibrary::GetWindowHandle()
 {
-	//エディタの場合
+	// エディタの場合
 	if (GIsEditor)
 	{
 		IMainFrameModule& MainFrameModule = IMainFrameModule::Get();
@@ -46,7 +46,7 @@ void* UPDFImporterBPLibrary::GetWindowHandle()
 			return MainWindow->GetNativeWindow()->GetOSWindowHandle();
 		}
 	}
-	//実行時の場合
+	// 実行時の場合
 	else
 	{
 		if (GEngine && GEngine->GameViewport)
@@ -78,7 +78,7 @@ EOpenPDFDialogResult UPDFImporterBPLibrary::ExecOpenFileDialog(const FString& De
 
 			if (result)
 			{
-				//相対パスを絶対パスに変換
+				// 相対パスを絶対パスに変換
 				for (FString& fileName : FileNames)
 				{
 					fileName = FPaths::ConvertRelativePathToFull(fileName);
