@@ -35,7 +35,13 @@ public:
 	virtual EReimportResult::Type Reimport(UObject* Obj) override;
 	// End of FReimportHandler interface
 
+	// Called before the asset is deleted in the editor
+	void OnAssetsPreDelete(const TArray<UObject*>& AssetsToDelete);
+
 private:
 	// Display a dialog to enter import options
 	void ShowImportOptionWindow(TSharedPtr<class SPDFImportOptions>& Options, const FString& Filename, class UPDFImportOptions* &Result);
+
+	// 
+	bool DeletePageTextures(class UPDF* PdfToDelete);
 };

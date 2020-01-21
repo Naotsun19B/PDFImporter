@@ -75,8 +75,7 @@ void UPDF::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
 	{
 		OutTags.Add(FAssetRegistryTag(SourceFileTagName(), AssetImportData->GetSourceData().ToJson(), FAssetRegistryTag::TT_Hidden));
 	}
-
+	
 	Super::GetAssetRegistryTags(OutTags);
 }
 #endif
-

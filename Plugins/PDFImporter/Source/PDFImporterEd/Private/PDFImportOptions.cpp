@@ -40,7 +40,7 @@ void SPDFImportOptions::Construct(const FArguments& InArgs)
 	this->ChildSlot
 	[
 		SNew(SVerticalBox)
-
+		// ファイルパス
 		+ SVerticalBox::Slot()
 			.AutoHeight()
 			.Padding(2)
@@ -68,14 +68,14 @@ void SPDFImportOptions::Construct(const FArguments& InArgs)
 						]
 				]
 			]
-
+		// 入力欄
 		+ SVerticalBox::Slot()
 			.Padding(2)
 			.MaxHeight(500.0f)
 			[
 				DetailsView->AsShared()
 			]
-
+		// インポートとキャンセルのボタン
 		+ SVerticalBox::Slot()
 			.AutoHeight()
 			.HAlign(HAlign_Right)
@@ -83,22 +83,22 @@ void SPDFImportOptions::Construct(const FArguments& InArgs)
 			[
 				SNew(SUniformGridPanel)
 				.SlotPadding(2)
-			+ SUniformGridPanel::Slot(0, 0)
-				[
-					SAssignNew(ImportButton, SButton)
-					.HAlign(HAlign_Center)
-					.Text(LOCTEXT("PDFImportOptions_Import", "Import"))
-					.OnClicked(this, &SPDFImportOptions::OnImport)
-				]
+				+ SUniformGridPanel::Slot(0, 0)
+					[
+						SNew(SButton)
+						.HAlign(HAlign_Center)
+						.Text(LOCTEXT("PDFImportOptions_Import", "Import"))
+						.OnClicked(this, &SPDFImportOptions::OnImport)
+					]
 
-			+ SUniformGridPanel::Slot(1, 0)
-				[
-					SNew(SButton)
-					.HAlign(HAlign_Center)
-					.Text(LOCTEXT("PDFImportOptions_Cancel", "Cancel"))
-					.ToolTipText(LOCTEXT("PDFImportOptions_Cancel_ToolTip", "Cancels importing this PDF file"))
-					.OnClicked(this, &SPDFImportOptions::OnCancel)
-				]
+				+ SUniformGridPanel::Slot(1, 0)
+					[
+						SNew(SButton)
+						.HAlign(HAlign_Center)
+						.Text(LOCTEXT("PDFImportOptions_Cancel", "Cancel"))
+						.ToolTipText(LOCTEXT("PDFImportOptions_Cancel_ToolTip", "Cancels importing this PDF file"))
+						.OnClicked(this, &SPDFImportOptions::OnCancel)
+					]
 			]
 	];
 }

@@ -2,12 +2,12 @@
 #include "GhostscriptCore.h"
 #include "PDF.h"
 #include "PDFImportOptions.h"
-#include "Editor.h"
 #include "HAL/FileManager.h"
-#include "Subsystems/ImportSubsystem.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
+#include "ObjectTools.h"
+#include "Editor.h"
 
 #define LOCTEXT_NAMESPACE "PDFFactory"
 
@@ -18,6 +18,9 @@ UPDFFactory::UPDFFactory(const FObjectInitializer& ObjectInitializer)
 	bEditorImport = true;
 	bText = true;
 	Formats.Add(TEXT("pdf;PDF File"));
+
+	// アセットが削除された時のイベントを登録
+	FEditorDelegates::OnAssetsPreDelete.AddUObject(this, &UPDFFactory::OnAssetsPreDelete);
 
 	FPDFImporterModule& PDFImporterModule = FModuleManager::LoadModuleChecked<FPDFImporterModule>(FName("PDFImporter"));
 	GhostscriptCore = PDFImporterModule.GetGhostscriptCore();
@@ -61,17 +64,17 @@ UObject* UPDFFactory::FactoryCreateFile(
 			NewPDF->Dpi = LoadedPDF->Dpi;
 			NewPDF->Pages = LoadedPDF->Pages;
 
-			NewPDF->AssetImportData = NewObject<UAssetImportData>();
-			NewPDF->AssetImportData->SourceData.Insert({ Filename, IFileManager::Get().GetTimeStamp(*Filename) });
 			NewPDF->Filename = Filename;
 			NewPDF->TimeStamp = IFileManager::Get().GetTimeStamp(*Filename);
+			NewPDF->AssetImportData = NewObject<UAssetImportData>();
+			NewPDF->AssetImportData->SourceData.Insert({ NewPDF->Filename, NewPDF->TimeStamp });
 		}
 
 		return NewPDF;
 	}
 	else
 	{
-		GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPostImport(this, nullptr);
+		bOutOperationCanceled = true;
 		return nullptr;
 	}
 }
@@ -115,6 +118,9 @@ EReimportResult::Type UPDFFactory::Reimport(UObject* Obj)
 		return EReimportResult::Failed;
 	}
 
+	// 古いページのテクスチャアセットを削除
+	DeletePageTextures(PDF);
+
 	EReimportResult::Type Result = EReimportResult::Failed;
 	if (UFactory::StaticImportObject(
 		PDF->GetClass(), PDF->GetOuter(),
@@ -133,6 +139,27 @@ EReimportResult::Type UPDFFactory::Reimport(UObject* Obj)
 	}
 
 	return EReimportResult::Failed;
+}
+
+void UPDFFactory::OnAssetsPreDelete(const TArray<UObject*>& AssetsToDelete)
+{
+	for (UObject* AssetToDelete : AssetsToDelete)
+	{
+		UPDF* PdfToDelete = Cast<UPDF>(AssetToDelete);
+
+		if (PdfToDelete)
+		{
+			FString DirectoryPath = FPaths::Combine(FGhostscriptCore::PagesDirectoryPath, FPaths::GetBaseFilename(PdfToDelete->Filename));
+			if (DeletePageTextures(PdfToDelete))
+			{
+				IFileManager::Get().DeleteDirectory(*DirectoryPath);
+			}
+			else
+			{
+				UE_LOG(PDFImporter, Warning, TEXT("Failed to delete texture assets on all pages, so you need to delete them manually. : %s"), *DirectoryPath);
+			}
+		}
+	}
 }
 
 void UPDFFactory::ShowImportOptionWindow(TSharedPtr<SPDFImportOptions>& Options, const FString& Filename, UPDFImportOptions* &Result)
@@ -157,6 +184,17 @@ void UPDFFactory::ShowImportOptionWindow(TSharedPtr<SPDFImportOptions>& Options,
 	}
 
 	FSlateApplication::Get().AddModalWindow(Window, ParentWindow, false);
+}
+
+bool UPDFFactory::DeletePageTextures(UPDF* PdfToDelete)
+{
+	TArray<UObject*> AssetsToDelete;
+	for (auto Page : PdfToDelete->Pages)
+	{
+		AssetsToDelete.Add(Cast<UObject>(Page));
+	}
+	
+	return ObjectTools::ForceDeleteObjects(AssetsToDelete, false) == AssetsToDelete.Num();
 }
 
 #undef LOCTEXT_NAMESPACE

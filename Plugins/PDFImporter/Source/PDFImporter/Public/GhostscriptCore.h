@@ -23,6 +23,10 @@ private:
 	TSharedPtr<class IImageWrapper> ImageWrapper;
 
 public:
+	// The path to the directory where the page's texture assets are located
+	static FString PagesDirectoryPath;
+
+public:
 	// Convert PDF to PDF asset
 	class UPDF* ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale, bool bMakeAsset);
 

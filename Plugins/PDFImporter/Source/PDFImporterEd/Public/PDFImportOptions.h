@@ -17,10 +17,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PageRange")
 	bool SpecifyPageRange;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PageRange", meta = (ClampMin = 0, UIMin = 0, EditCondition = "SpecifyPageRange"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PageRange", meta = (ClampMin = 1, UIMin = 1, EditCondition = "SpecifyPageRange"))
 	int FirstPage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PageRange", meta = (ClampMin = 0, UIMin = 0, EditCondition = "SpecifyPageRange"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PageRange", meta = (ClampMin = 1, UIMin = 1, EditCondition = "SpecifyPageRange"))
 	int LastPage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dpi")
@@ -39,7 +39,6 @@ private:
 	UPDFImportOptions* ImportOptions;
 	bool bShouldImport;
 	TWeakPtr<class SWindow> WidgetWindow;
-	TSharedPtr<class SButton> ImportButton;
 	TSharedPtr<class IDetailsView> DetailsView;
 
 public:
@@ -58,9 +57,12 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
+	// Button reaction
 	FReply OnImport();
 	FReply OnCancel();
+	// End of Button reaction
 
+	// Import was done
 	bool ShouldImport() const { return bShouldImport; }
 };
 

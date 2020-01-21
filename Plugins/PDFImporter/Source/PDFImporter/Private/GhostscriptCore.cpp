@@ -11,6 +11,8 @@
 
 #include <string>
 
+FString FGhostscriptCore::PagesDirectoryPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("PDFImporter"), TEXT("Content")));
+
 FGhostscriptCore::FGhostscriptCore()
 {
 	// dllファイルのパスを取得
@@ -284,7 +286,7 @@ bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class
 
 			// パッケージを作成
 			FString PackagePath(TEXT("/PDFImporter/") + Filename + TEXT("/"));
-			FString AbsolutePackagePath = FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("PDFImporter"), TEXT("Content")) + TEXT("/") + Filename + TEXT("/");
+			FString AbsolutePackagePath = PagesDirectoryPath + TEXT("/") + Filename + TEXT("/");
 
 			FPackageName::RegisterMountPoint(PackagePath, AbsolutePackagePath);
 
