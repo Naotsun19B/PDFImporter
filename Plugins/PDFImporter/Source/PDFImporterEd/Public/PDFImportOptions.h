@@ -30,7 +30,7 @@ public:
 	FString Locale;
 
 public:
-	UPDFImportOptions() : SpecifyPageRange(false), FirstPage(0), LastPage(0), Dpi(150), Locale(TEXT("ja")) {}
+	UPDFImportOptions() : SpecifyPageRange(false), FirstPage(1), LastPage(1), Dpi(150), Locale(TEXT("ja")) {}
 };
 
 class SPDFImportOptions : public SCompoundWidget
@@ -45,7 +45,7 @@ public:
 	SLATE_BEGIN_ARGS(SPDFImportOptions)
 		: _WidgetWindow()
 		, _ImportOptions(nullptr)
-	{}
+		{}
 
 		SLATE_ARGUMENT(TSharedPtr<SWindow>, WidgetWindow)
 		SLATE_ARGUMENT(UPDFImportOptions*, ImportOptions)

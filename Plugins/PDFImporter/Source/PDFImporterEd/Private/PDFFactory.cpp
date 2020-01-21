@@ -119,7 +119,11 @@ EReimportResult::Type UPDFFactory::Reimport(UObject* Obj)
 	}
 
 	// 古いページのテクスチャアセットを削除
-	DeletePageTextures(PDF);
+	if(!DeletePageTextures(PDF))
+	{
+		FString DirectoryPath = FPaths::Combine(FGhostscriptCore::PagesDirectoryPath, FPaths::GetBaseFilename(PDF->Filename));
+		UE_LOG(PDFImporter, Warning, TEXT("Failed to delete texture assets on all pages, so you need to delete them manually. : %s"), *DirectoryPath);
+	}
 
 	EReimportResult::Type Result = EReimportResult::Failed;
 	if (UFactory::StaticImportObject(
@@ -188,13 +192,18 @@ void UPDFFactory::ShowImportOptionWindow(TSharedPtr<SPDFImportOptions>& Options,
 
 bool UPDFFactory::DeletePageTextures(UPDF* PdfToDelete)
 {
-	TArray<UObject*> AssetsToDelete;
-	for (auto Page : PdfToDelete->Pages)
+	if (PdfToDelete->Pages.Num() != 0)
 	{
-		AssetsToDelete.Add(Cast<UObject>(Page));
+		TArray<UObject*> AssetsToDelete;
+		for (auto Page : PdfToDelete->Pages)
+		{
+			AssetsToDelete.Add(Cast<UObject>(Page));
+		}
+
+		return ObjectTools::ForceDeleteObjects(AssetsToDelete, false) == AssetsToDelete.Num();
 	}
-	
-	return ObjectTools::ForceDeleteObjects(AssetsToDelete, false) == AssetsToDelete.Num();
+
+	return true;
 }
 
 #undef LOCTEXT_NAMESPACE

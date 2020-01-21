@@ -42,6 +42,6 @@ private:
 	// Display a dialog to enter import options
 	void ShowImportOptionWindow(TSharedPtr<class SPDFImportOptions>& Options, const FString& Filename, class UPDFImportOptions* &Result);
 
-	// 
+	// Delete all corresponding texture assets of PDF asset
 	bool DeletePageTextures(class UPDF* PdfToDelete);
 };
