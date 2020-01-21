@@ -34,4 +34,8 @@ public:
 	virtual void SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths) override;
 	virtual EReimportResult::Type Reimport(UObject* Obj) override;
 	// End of FReimportHandler interface
+
+private:
+	// Display a dialog to enter import options
+	void ShowImportOptionWindow(TSharedPtr<class SPDFImportOptions>& Options, const FString& Filename, class UPDFImportOptions* &Result);
 };

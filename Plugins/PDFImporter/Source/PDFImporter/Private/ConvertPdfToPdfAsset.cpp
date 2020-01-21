@@ -16,7 +16,7 @@ UConvertPdfToPdfAsset::UConvertPdfToPdfAsset(const FObjectInitializer& ObjectIni
 
 UConvertPdfToPdfAsset* UConvertPdfToPdfAsset::ConvertPdfToPdfAsset(
 	const UObject* WorldContextObject, 
-	const FString& PDFFilePath, 
+	const FString& PDF_FilePath, 
 	int Dpi,
 	int FirstPage,
 	int LastPage,
@@ -24,7 +24,7 @@ UConvertPdfToPdfAsset* UConvertPdfToPdfAsset::ConvertPdfToPdfAsset(
 ){
 	UConvertPdfToPdfAsset* Node = NewObject<UConvertPdfToPdfAsset>();
 	Node->WorldContextObject = WorldContextObject;
-	Node->PDFFilePath = PDFFilePath;
+	Node->PDFFilePath = PDF_FilePath;
 	Node->Dpi = Dpi;
 	Node->FirstPage = FirstPage;
 	Node->LastPage = LastPage;
@@ -34,11 +34,12 @@ UConvertPdfToPdfAsset* UConvertPdfToPdfAsset::ConvertPdfToPdfAsset(
 
 void UConvertPdfToPdfAsset::Activate()
 {
-	if (!WorldContextObject)
+	if (WorldContextObject == nullptr)
 	{
 		FFrame::KismetExecutionMessage(TEXT("Invalid WorldContextObject. Cannot execute ConvertPDFtoPDFAsset."), ELogVerbosity::Error);
 		return;
 	}
+
 	if (bIsActive)
 	{
 		FFrame::KismetExecutionMessage(TEXT("ConvertPDFtoPDFAsset is already running."), ELogVerbosity::Warning);
@@ -46,19 +47,18 @@ void UConvertPdfToPdfAsset::Activate()
 	}
 	
 	// •ÏŠ·ŠJŽn
-	auto ConvertTask = new FAutoDeleteAsyncTask<FAsyncExecTask>([this]() { ExecConversion(); });
-	ConvertTask->StartBackgroundTask();
-}
+	auto ConvertTask = new FAutoDeleteAsyncTask<FAsyncExecTask>([this]() 
+	{
+		UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale, false);
+		if (PDFAsset != nullptr)
+		{
+			Completed.Broadcast(PDFAsset);
+		}
+		else
+		{
+			Failed.Broadcast();
+		}
+	});
 
-void UConvertPdfToPdfAsset::ExecConversion()
-{
-	UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale, false);
-	if (PDFAsset != nullptr)
-	{
-		Completed.Broadcast(PDFAsset);
-	}
-	else
-	{
-		Failed.Broadcast();
-	}
+	ConvertTask->StartBackgroundTask();
 }

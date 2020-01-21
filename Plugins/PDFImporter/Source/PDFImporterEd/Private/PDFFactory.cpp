@@ -1,8 +1,15 @@
 #include "PDFFactory.h"
 #include "GhostscriptCore.h"
 #include "PDF.h"
+#include "PDFImportOptions.h"
+#include "Editor.h"
 #include "HAL/FileManager.h"
+#include "Subsystems/ImportSubsystem.h"
 #include "EditorFramework/AssetImportData.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
+
+#define LOCTEXT_NAMESPACE "PDFFactory"
 
 UPDFFactory::UPDFFactory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -37,24 +44,36 @@ UObject* UPDFFactory::FactoryCreateFile(
 	bool& bOutOperationCanceled
 )
 {
-	UPDF* NewPDF = CastChecked<UPDF>(StaticConstructObject_Internal(InClass, InParent, InName, Flags));
-	UPDF* LoadedPDF = GhostscriptCore->ConvertPdfToPdfAsset(Filename, 150, 0, 0, TEXT("ja"), true);
+	TSharedPtr<SPDFImportOptions> Options;
+	UPDFImportOptions* Result = NewObject<UPDFImportOptions>();
+	ShowImportOptionWindow(Options, Filename, Result);
 
-	if (LoadedPDF != nullptr)
+	if (Options->ShouldImport())
 	{
-		NewPDF->PageRange = LoadedPDF->PageRange;
-		NewPDF->Dpi = LoadedPDF->Dpi;
-		NewPDF->Pages = LoadedPDF->Pages;
+		UPDF* NewPDF = CastChecked<UPDF>(StaticConstructObject_Internal(InClass, InParent, InName, Flags));
+		UPDF* LoadedPDF = GhostscriptCore->ConvertPdfToPdfAsset(
+			Filename, Result->Dpi, Result->FirstPage, Result->LastPage, Result->Locale, true
+		);
 
-#if WITH_EDITORONLY_DATA
-		NewPDF->AssetImportData = NewObject<UAssetImportData>();
-		NewPDF->AssetImportData->SourceData.Insert({ Filename, IFileManager::Get().GetTimeStamp(*Filename) });
-		NewPDF->Filename = Filename;
-		NewPDF->TimeStamp = IFileManager::Get().GetTimeStamp(*Filename);
-#endif
+		if (LoadedPDF != nullptr)
+		{
+			NewPDF->PageRange = LoadedPDF->PageRange;
+			NewPDF->Dpi = LoadedPDF->Dpi;
+			NewPDF->Pages = LoadedPDF->Pages;
+
+			NewPDF->AssetImportData = NewObject<UAssetImportData>();
+			NewPDF->AssetImportData->SourceData.Insert({ Filename, IFileManager::Get().GetTimeStamp(*Filename) });
+			NewPDF->Filename = Filename;
+			NewPDF->TimeStamp = IFileManager::Get().GetTimeStamp(*Filename);
+		}
+
+		return NewPDF;
 	}
-
-	return NewPDF;
+	else
+	{
+		GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPostImport(this, nullptr);
+		return nullptr;
+	}
 }
 
 bool UPDFFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames)
@@ -115,3 +134,29 @@ EReimportResult::Type UPDFFactory::Reimport(UObject* Obj)
 
 	return EReimportResult::Failed;
 }
+
+void UPDFFactory::ShowImportOptionWindow(TSharedPtr<SPDFImportOptions>& Options, const FString& Filename, UPDFImportOptions* &Result)
+{
+	TSharedRef<SWindow> Window = SNew(SWindow)
+		.Title(LOCTEXT("WindowTitle", "PDF Import Options"))
+		.SizingRule(ESizingRule::Autosized);
+
+	Window->SetContent(
+		SAssignNew(Options, SPDFImportOptions)
+		.WidgetWindow(Window)
+		.ImportOptions(Result)
+		.Filename(FText::FromString(Filename))
+	);
+
+	TSharedPtr<SWindow> ParentWindow;
+
+	if (FModuleManager::Get().IsModuleLoaded("MainFrame"))
+	{
+		IMainFrameModule& MainFrame = FModuleManager::LoadModuleChecked<IMainFrameModule>("MainFrame");
+		ParentWindow = MainFrame.GetParentWindow();
+	}
+
+	FSlateApplication::Get().AddModalWindow(Window, ParentWindow, false);
+}
+
+#undef LOCTEXT_NAMESPACE

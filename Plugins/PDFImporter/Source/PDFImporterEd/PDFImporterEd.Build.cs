@@ -31,6 +31,8 @@ public class PDFImporterEd : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+                "PropertyEditor",
+                "EditorStyle",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

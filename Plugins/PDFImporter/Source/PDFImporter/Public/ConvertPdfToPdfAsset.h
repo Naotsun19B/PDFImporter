@@ -43,7 +43,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = 3, BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject", DisplayName = "Convert PDF to PDFAsset"), Category = "PDFImporter")
 	static UConvertPdfToPdfAsset* ConvertPdfToPdfAsset(
 		const UObject* WorldContextObject, 
-		const FString& PDFFilePath, 
+		const FString& PDF_FilePath, 
 		int Dpi = 150,
 		int FirstPage = 0,
 		int LastPage = 0,
@@ -52,8 +52,4 @@ public:
 
 	// UBlueprintAsyncActionBase interface
 	virtual void Activate() override;
-
-private:
-	// Execute convert process
-	void ExecConversion();
 };
