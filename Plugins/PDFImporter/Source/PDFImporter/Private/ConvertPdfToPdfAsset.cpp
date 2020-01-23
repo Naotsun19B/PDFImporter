@@ -49,7 +49,7 @@ void UConvertPdfToPdfAsset::Activate()
 	// •ÏŠ·ŠJŽn
 	auto ConvertTask = new FAutoDeleteAsyncTask<FAsyncExecTask>([this]() 
 	{
-		UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale, false);
+		UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale);
 		if (PDFAsset != nullptr)
 		{
 			Completed.Broadcast(PDFAsset);

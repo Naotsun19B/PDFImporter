@@ -28,7 +28,7 @@ public:
 
 public:
 	// Convert PDF to PDF asset
-	class UPDF* ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale, bool bMakeAsset);
+	class UPDF* ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale, bool bIsImportIntoEditor = false);
 
 private:
 	// Convert PDF to multiple jpeg images using Ghostscript API
@@ -37,14 +37,16 @@ private:
 	// Create UTexture2D from image files in directory
 	bool LoadTexture2DFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture);
 
+#if WITH_EDITORONLY_DATA
 	// Create texture asset from image files in directory
 	bool CreateTextureAssetFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture);
+#endif
 
 	// Get the size of FString data
 	int GetFStringSize(const FString& Text);
 
 private:
-	// Only PDFImporterModule can create and destroy instances
+	// Only PDFImporterModule can create instances
 	friend FPDFImporterModule;
 
 	FGhostscriptCore();

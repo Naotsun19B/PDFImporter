@@ -16,7 +16,7 @@ public:
 	virtual void ShutdownModule() override;
 
 	// Get an instance of GhostscriptCore
-	TSharedRef<class FGhostscriptCore> GetGhostscriptCore() const { return GhostscriptCore.ToSharedRef(); }
+	TSharedPtr<class FGhostscriptCore> GetGhostscriptCore() const { return GhostscriptCore; }
 };
 
 DEFINE_LOG_CATEGORY_STATIC(PDFImporter, Log, All);

@@ -53,7 +53,7 @@ FGhostscriptCore::~FGhostscriptCore()
 	UE_LOG(PDFImporter, Log, TEXT("Ghostscript dll unloaded"));
 }
 
-UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale, bool bMakeAsset)
+UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale, bool bIsImportIntoEditor)
 {
 	IFileManager& FileManager = IFileManager::Get();
 	
@@ -90,9 +90,11 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 		for (const FString& PageName : PageNames)
 		{
 			bool bResult = false;
-			if (bMakeAsset)
+			if (bIsImportIntoEditor)
 			{
+#if WITH_EDITORONLY_DATA
 				bResult = CreateTextureAssetFromFile(FPaths::Combine(TempDirPath, PageName), TextureTemp);
+#endif
 			}
 			else
 			{
@@ -266,6 +268,7 @@ bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, class UTex
 	return false;
 }
 
+#if WITH_EDITORONLY_DATA
 bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture)
 {
 	// âÊëúÉfÅ[É^Çì«Ç›çûÇﬁ
@@ -333,6 +336,7 @@ bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class
 
 	return false;
 }
+#endif
 
 int FGhostscriptCore::GetFStringSize(const FString& InString)
 {

@@ -54,9 +54,7 @@ UObject* UPDFFactory::FactoryCreateFile(
 	if (Options->ShouldImport())
 	{
 		UPDF* NewPDF = CastChecked<UPDF>(StaticConstructObject_Internal(InClass, InParent, InName, Flags));
-		UPDF* LoadedPDF = GhostscriptCore->ConvertPdfToPdfAsset(
-			Filename, Result->Dpi, Result->FirstPage, Result->LastPage, Result->Locale, true
-		);
+		UPDF* LoadedPDF = GhostscriptCore->ConvertPdfToPdfAsset(Filename, Result->Dpi, Result->FirstPage, Result->LastPage, Result->Locale, true);
 
 		if (LoadedPDF != nullptr)
 		{
