@@ -52,20 +52,20 @@ void SPDFImportOptions::Construct(const FArguments& InArgs)
 					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
-						[
-							SNew(STextBlock)
-							.Font(FEditorStyle::GetFontStyle("CurveEd.LabelFont"))
-							.Text(LOCTEXT("Import_CurrentFileTitle", "Current File: "))
-						]
+					[
+						SNew(STextBlock)
+						.Font(FEditorStyle::GetFontStyle("CurveEd.LabelFont"))
+						.Text(LOCTEXT("Import_CurrentFileTitle", "Current File: "))
+					]
 					+ SHorizontalBox::Slot()
 					.Padding(5, 0, 0, 0)
 					.AutoWidth()
 					.VAlign(VAlign_Center)
-						[
-							SNew(STextBlock)
-							.Font(FEditorStyle::GetFontStyle("CurveEd.InfoFont"))
-							.Text(InArgs._Filename)
-						]
+					[
+						SNew(STextBlock)
+						.Font(FEditorStyle::GetFontStyle("CurveEd.InfoFont"))
+						.Text(InArgs._Filename)
+					]
 				]
 			]
 		// “ü—Í—“

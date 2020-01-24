@@ -40,17 +40,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PDF")
 	TArray<class UTexture2D*> Pages;
 
-#if WITH_EDITORONLY_DATA
 	// Data for import setting
+#if WITH_EDITORONLY_DATA
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "ImportSettings")
 	class UAssetImportData* AssetImportData;
-
+#endif
 	UPROPERTY()
 	FString Filename;
 
 	UPROPERTY()
 	FDateTime TimeStamp;
-#endif
 
 public:
 	// Get the texture of the specified page

@@ -37,10 +37,7 @@ void UPDF::Serialize(FArchive& Ar)
 	Ar.UsingCustomVersion(GUID);
 	if (Ar.IsSaving() || (Ar.IsLoading() && (Version <= Ar.CustomVer(GUID))))
 	{
-		Ar << PageRange.FirstPage << PageRange.LastPage << Dpi << Pages;
-#if WITH_EDITORONLY_DATA
-		Ar << Filename << TimeStamp;
-#endif
+		Ar << PageRange.FirstPage << PageRange.LastPage << Dpi << Pages << Filename << TimeStamp;
 	}
 }
 
