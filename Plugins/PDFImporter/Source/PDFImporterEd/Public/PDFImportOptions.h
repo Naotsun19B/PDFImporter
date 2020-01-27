@@ -26,11 +26,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dpi")
 	int Dpi;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Locale")
-	FString Locale;
-
 public:
-	UPDFImportOptions() : SpecifyPageRange(false), FirstPage(1), LastPage(1), Dpi(150), Locale(TEXT("ja")) {}
+	UPDFImportOptions() : SpecifyPageRange(false), FirstPage(1), LastPage(1), Dpi(150) {}
 };
 
 class SPDFImportOptions : public SCompoundWidget

@@ -9,7 +9,9 @@
 #include "IImageWrapperModule.h"
 #include "IImageWrapper.h"
 
-#include <string>
+#include "AllowWindowsPlatformTypes.h"
+#include <Windows.h>
+#include "HideWindowsPlatformTypes.h"
 
 FString FGhostscriptCore::PagesDirectoryPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("PDFImporter"), TEXT("Content")));
 
@@ -53,7 +55,7 @@ FGhostscriptCore::~FGhostscriptCore()
 	UE_LOG(PDFImporter, Log, TEXT("Ghostscript dll unloaded"));
 }
 
-UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale, bool bIsImportIntoEditor)
+UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, bool bIsImportIntoEditor)
 {
 	IFileManager& FileManager = IFileManager::Get();
 	
@@ -79,7 +81,7 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 	TArray<UTexture2D*> Buffer; 
 	UPDF* PDFAsset = nullptr;
 
-	if (ConvertPdfToJpeg(InputPath, OutputPath, Dpi, FirstPage, LastPage, Locale))
+	if (ConvertPdfToJpeg(InputPath, OutputPath, Dpi, FirstPage, LastPage))
 	{
 		// 画像のファイルパスを取得
 		TArray<FString> PageNames;
@@ -131,13 +133,20 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 	return PDFAsset;
 }
 
-bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale)
+bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage)
 {
 	if (!(FirstPage > 0 && LastPage > 0 && FirstPage <= LastPage))
 	{
 		FirstPage = 1;
 		LastPage = INT_MAX;
 	}
+
+	TArray<char> FirstPageBuffer = FStringToCharPtr(FString(TEXT("-dFirstPage=") + FString::FromInt(FirstPage)));
+	TArray<char> LastPageBuffer = FStringToCharPtr(FString(TEXT("-dLastPage=") + FString::FromInt(LastPage)));
+	TArray<char> DpiXBuffer = FStringToCharPtr(FString(TEXT("-dDEVICEXRESOLUTION=") + FString::FromInt(Dpi)));
+	TArray<char> DpiYBuffer = FStringToCharPtr(FString(TEXT("-dDEVICEYRESOLUTION=") + FString::FromInt(Dpi)));
+	TArray<char> OutputPathBuffer = FStringToCharPtr(FString(TEXT("-sOutputFile=") + OutputPath));
+	TArray<char> InputPathBuffer = FStringToCharPtr(InputPath);
 
 	const char* Args[20] =
 	{
@@ -161,54 +170,13 @@ bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString&
 		"-sDEVICE=jpeg",	// jpeg形式で出力
 		"-sPAPERSIZE=a7",	// 紙のサイズ
 
-		"",	// 14 : 始めのページを指定
-		"",	// 15 : 終わりのページを指定
-		"",	// 16 : 横のDPI
-		"",	// 17 : 縦のDPI
-		"", // 18 : 出力パス
-		""  // 19 : 入力パス
+		FirstPageBuffer.GetData(),	// 14 : 始めのページを指定
+		LastPageBuffer.GetData(),	// 15 : 終わりのページを指定
+		DpiXBuffer.GetData(),		// 16 : 横のDPI
+		DpiYBuffer.GetData(),		// 17 : 縦のDPI
+		OutputPathBuffer.GetData(), // 18 : 出力パス
+		InputPathBuffer.GetData()	// 19 : 入力パス
 	};
-
-	if (Locale != TEXT(""))
-	{
-		std::locale::global(std::locale(TCHAR_TO_ANSI(*Locale)));
-		UE_LOG(PDFImporter, Log, TEXT("The locale has been set : %s"), *Locale);
-	}
-
-	FString FirstPageTemp(TEXT("-dFirstPage=") + FString::FromInt(FirstPage));
-	int FirstPageSize = GetFStringSize(FirstPageTemp) + 1;
-	TArray<char> FirstPageBuffer("", FirstPageSize);
-	sprintf_s(FirstPageBuffer.GetData(), FirstPageSize, "%S", *FirstPageTemp);
-	Args[14] = FirstPageBuffer.GetData();
-
-	FString LastPageTemp(TEXT("-dLastPage=") + FString::FromInt(LastPage));
-	int LastPageSize = GetFStringSize(LastPageTemp) + 1;
-	TArray<char> LastPageBuffer("", LastPageSize);
-	sprintf_s(LastPageBuffer.GetData(), LastPageSize, "%S", *LastPageTemp);
-	Args[15] = LastPageBuffer.GetData();
-
-	FString DpiXTemp(TEXT("-dDEVICEXRESOLUTION=") + FString::FromInt(Dpi));
-	int DpiXSize = GetFStringSize(DpiXTemp) + 1;
-	TArray<char> DpiXBuffer("", DpiXSize);
-	sprintf_s(DpiXBuffer.GetData(), DpiXSize, "%S", *DpiXTemp);
-	Args[16] = DpiXBuffer.GetData();
-
-	FString DpiYTemp(TEXT("-dDEVICEYRESOLUTION=") + FString::FromInt(Dpi));
-	int DpiYSize = GetFStringSize(DpiYTemp) + 1;
-	TArray<char> DpiYBuffer("", DpiYSize);
-	sprintf_s(DpiYBuffer.GetData(), DpiYSize, "%S", *DpiYTemp);
-	Args[17] = DpiYBuffer.GetData();
-
-	FString OutputPathTemp(TEXT("-sOutputFile=") + OutputPath);
-	int OutputPathSize = GetFStringSize(OutputPathTemp) + 1;
-	TArray<char> OutputPathBuffer("", OutputPathSize);
-	sprintf_s(OutputPathBuffer.GetData(), OutputPathSize, "%S", *OutputPathTemp);
-	Args[18] = OutputPathBuffer.GetData();
-
-	int InputPathSize = GetFStringSize(InputPath) + 1;
-	TArray<char> InputPathBuffer("", InputPathSize);
-	sprintf_s(InputPathBuffer.GetData(), InputPathSize, "%S", *InputPath);
-	Args[19] = InputPathBuffer.GetData();
 
 	// Ghostscriptのインスタンスを作成
 	void* GhostscriptInstance = nullptr;
@@ -337,6 +305,14 @@ bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class
 	return false;
 }
 #endif
+
+TArray<char> FGhostscriptCore::FStringToCharPtr(const FString& Text)
+{
+	int Size = GetFStringSize(Text) + 1;
+	TArray<char> Buffer("", Size);
+	WideCharToMultiByte(CP_ACP, 0, *Text, Size, Buffer.GetData(), Buffer.Num(), NULL, NULL);
+	return Buffer;
+}
 
 int FGhostscriptCore::GetFStringSize(const FString& InString)
 {

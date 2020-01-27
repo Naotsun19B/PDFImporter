@@ -33,7 +33,6 @@ private:
 	int Dpi;
 	int FirstPage;
 	int LastPage;
-	FString Locale;
 
 public:
 	// Constructor
@@ -46,8 +45,7 @@ public:
 		const FString& PDF_FilePath, 
 		int Dpi = 150,
 		int FirstPage = 0,
-		int LastPage = 0,
-		const FString& Locale = ""
+		int LastPage = 0
 	);
 
 	// UBlueprintAsyncActionBase interface

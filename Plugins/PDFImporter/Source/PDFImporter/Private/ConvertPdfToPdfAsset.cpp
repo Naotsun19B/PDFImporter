@@ -8,7 +8,7 @@
 
 UConvertPdfToPdfAsset::UConvertPdfToPdfAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer), WorldContextObject(nullptr), bIsActive(false), 
-	  PDFFilePath(""), Dpi(0), FirstPage(0), LastPage(0), Locale("")
+	  PDFFilePath(""), Dpi(0), FirstPage(0), LastPage(0)
 {
 	FPDFImporterModule& PDFImporterModule = FModuleManager::LoadModuleChecked<FPDFImporterModule>(FName("PDFImporter"));
 	GhostscriptCore = PDFImporterModule.GetGhostscriptCore();
@@ -19,8 +19,7 @@ UConvertPdfToPdfAsset* UConvertPdfToPdfAsset::ConvertPdfToPdfAsset(
 	const FString& PDF_FilePath, 
 	int Dpi,
 	int FirstPage,
-	int LastPage,
-	const FString& Locale
+	int LastPage
 ){
 	UConvertPdfToPdfAsset* Node = NewObject<UConvertPdfToPdfAsset>();
 	Node->WorldContextObject = WorldContextObject;
@@ -28,7 +27,6 @@ UConvertPdfToPdfAsset* UConvertPdfToPdfAsset::ConvertPdfToPdfAsset(
 	Node->Dpi = Dpi;
 	Node->FirstPage = FirstPage;
 	Node->LastPage = LastPage;
-	Node->Locale = Locale;
 	return Node;
 }
 
@@ -49,7 +47,7 @@ void UConvertPdfToPdfAsset::Activate()
 	// •ÏŠ·ŠJŽn
 	auto ConvertTask = new FAutoDeleteAsyncTask<FAsyncExecTask>([this]() 
 	{
-		UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage, Locale);
+		UPDF* PDFAsset = GhostscriptCore->ConvertPdfToPdfAsset(PDFFilePath, Dpi, FirstPage, LastPage);
 		if (PDFAsset != nullptr)
 		{
 			Completed.Broadcast(PDFAsset);

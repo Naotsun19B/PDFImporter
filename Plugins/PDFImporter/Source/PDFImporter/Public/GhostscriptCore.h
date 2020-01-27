@@ -28,11 +28,11 @@ public:
 
 public:
 	// Convert PDF to PDF asset
-	class UPDF* ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale, bool bIsImportIntoEditor = false);
+	class UPDF* ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, int FirstPage, int LastPage, bool bIsImportIntoEditor = false);
 
 private:
 	// Convert PDF to multiple jpeg images using Ghostscript API
-	bool ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage, const FString& Locale);
+	bool ConvertPdfToJpeg(const FString& InputPath, const FString& OutputPath, int Dpi, int FirstPage, int LastPage);
 
 	// Create UTexture2D from image files in directory
 	bool LoadTexture2DFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture);
@@ -41,6 +41,9 @@ private:
 	// Create texture asset from image files in directory
 	bool CreateTextureAssetFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture);
 #endif
+
+	// 
+	TArray<char> FStringToCharPtr(const FString& Text);
 
 	// Get the size of FString data
 	int GetFStringSize(const FString& Text);
