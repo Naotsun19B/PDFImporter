@@ -24,7 +24,7 @@ private:
 
 public:
 	// The path to the directory where the page's texture assets are located
-	static FString PagesDirectoryPath;
+	static const FString PagesDirectoryPath;
 
 public:
 	// Convert PDF to PDF asset

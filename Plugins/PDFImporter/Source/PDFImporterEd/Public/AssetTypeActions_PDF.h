@@ -10,7 +10,7 @@ public:
 	{
 		return NSLOCTEXT("AssetTypeActions", "AssetTypeActions_PDF", "PDF");
 	}
-	virtual FColor GetTypeColor() const override { return FColor::White; }
+	virtual FColor GetTypeColor() const override { return FColor(255, 196, 128); }
 	virtual uint32 GetCategories() override { return EAssetTypeCategories::Misc; }
 	virtual UClass* GetSupportedClass() const override;
 	virtual bool IsImportedAsset() const override { return true; }

@@ -7,7 +7,11 @@
 class FPDFImporterEdModule : public IModuleInterface
 {
 public:
+	// 
 	TSharedPtr<class FAssetTypeActions_PDF> PDF_AssetTypeActions;
+
+	// 
+	TSharedPtr<class FSlateStyleSet> StyleSet;
 
 public:
 	/** IModuleInterface implementation */

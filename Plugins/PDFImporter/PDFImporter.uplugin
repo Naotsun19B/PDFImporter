@@ -4,7 +4,7 @@
 	"VersionName": "1.0",
 	"FriendlyName": "PDFImporter",
 	"Description": "",
-	"Category": "Other",
+	"Category": "Misc",
 	"CreatedBy": "Naotsun",
 	"CreatedByURL": "",
 	"DocsURL": "",
@@ -14,15 +14,15 @@
 	"IsBetaVersion": false,
 	"Installed": false,
 	"Modules": [
-    {
-      "Name": "PDFImporter",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    },
-    {
-      "Name": "PDFImporterEd",
-      "Type": "Developer",
-      "LoadingPhase": "PreDefault"
-    }
+		{
+			"Name": "PDFImporter",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "PDFImporterEd",
+			"Type": "Developer",
+			"LoadingPhase": "PreDefault"
+		}
 	]
 }

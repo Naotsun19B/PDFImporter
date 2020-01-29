@@ -8,12 +8,13 @@
 #include "AssetRegistryModule.h"
 #include "IImageWrapperModule.h"
 #include "IImageWrapper.h"
+#include "IPluginManager.h"
 
 #include "AllowWindowsPlatformTypes.h"
 #include <Windows.h>
 #include "HideWindowsPlatformTypes.h"
 
-FString FGhostscriptCore::PagesDirectoryPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("PDFImporter"), TEXT("Content")));
+const FString FGhostscriptCore::PagesDirectoryPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(IPluginManager::Get().FindPlugin(TEXT("PDFImporter"))->GetBaseDir(), TEXT("Content")));
 
 FGhostscriptCore::FGhostscriptCore()
 {
