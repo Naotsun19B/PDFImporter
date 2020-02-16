@@ -121,7 +121,7 @@ protected:
 	 */
 	void ExtendToolBar( );
 
-	void FillToolbar(FToolBarBuilder& ToolbarBuilder, const TSharedRef< FUICommandList > ToolkitCommands);
+	void FillToolbar(FToolBarBuilder& ToolbarBuilder, const TSharedRef< FUICommandList > ToolkitCommands, TSharedRef<SWidget> PageControl);
 	/**
 	 * Gets the highest mip map level that this texture supports.
 	 *
@@ -163,12 +163,6 @@ private:
 	// Callback for getting the checked state of the volume display action.
 	bool HandleVolumeViewModeActionIsChecked( EPDFViewerVolumeViewMode InViewMode );
 
-	// Callback for toggling the Compress Now action.
-	void HandleCompressNowActionExecute( );
-
-	// Callback for getting the checked state of the Compress Now action.
-	bool HandleCompressNowActionCanExecute( ) const;
-
 	// Callback for toggling the Fit To Viewport action.
 	void HandleFitToViewportActionExecute( );
 
@@ -181,47 +175,11 @@ private:
 	// Callback for getting the checked state of the Green Channel action.
 	bool HandleGreenChannelActionIsChecked( ) const;
 
-	// Callback for changing the checked state of the MipMap check box.
-	void HandleMipLevelCheckBoxCheckedStateChanged( ECheckBoxState InNewState );
-
-	// Callback for getting the checked state of the MipMap check box.
-	ECheckBoxState HandleMipLevelCheckBoxIsChecked( ) const;
-
-	// Callback for determining whether the MipMap check box is enabled.
-	bool HandleMipLevelCheckBoxIsEnabled( ) const;
-
-	// Callback for changing the value of the mip map level entry box.
-	void HandleMipLevelEntryBoxChanged( int32 NewMipLevel );
-
-	// Callback for getting the value of the mip map level entry box.
-	TOptional<int32> HandleMipLevelEntryBoxValue( ) const;
-
-	// Callback for clicking the MipMinus button.
-	FReply HandleMipMapMinusButtonClicked( );
-
-	// Callback for clicking the MipPlus button.
-	FReply HandleMipMapPlusButtonClicked( );
-
 	// Callback for toggling the Red channel action.
 	void HandleRedChannelActionExecute( );
 
 	// Callback for getting the checked state of the Red Channel action.
 	bool HandleRedChannelActionIsChecked( ) const;
-
-	// Callback for determining whether the Reimport action can execute.
-	bool HandleReimportActionCanExecute( ) const;
-
-	// Callback for executing the Reimport action.
-	void HandleReimportActionExecute( );
-
-	// Callback that is executed after the reimport manager reimported an asset.
-	void HandleReimportManagerPostReimport( UObject* InObject, bool bSuccess );
-	
-	// Callback that is executed before the reimport manager reimported an asset.
-	void HandleReimportManagerPreReimport( UObject* InObject );
-
-	// Callback that is executed once an asset is imported
-	void HandleAssetPostImport(UFactory* InFactory, UObject* InObject);
 
 	// Callback for toggling the Desaturation channel action.
 	void HandleDesaturationChannelActionExecute( );
@@ -244,6 +202,12 @@ private:
 	// Callback for getting the checked state of the Texture Border action.
 	bool HandleTextureBorderActionIsChecked( ) const;
 
+	// Callback that updates the current page
+	void HandleCurrentPageEntryBoxChanged(int32 NewPageCount);
+
+	// Callback that returns the current page
+	TOptional<int32> HandleCurrentPageEntryBoxValue() const;
+
 	// Callback that fires when the back page button is pressed.
 	void HandleBackPage();
 
@@ -261,7 +225,7 @@ private:
 	class UPDF* PDF;
 
 	/** Number of pages currently viewed **/
-	int CurrentPage;
+	int32 CurrentPage;
 
 	/** The Texture asset being inspected */
 	UTexture* Texture;

@@ -69,10 +69,6 @@ FPDFViewerToolkit::FPDFViewerToolkit()
 
 FPDFViewerToolkit::~FPDFViewerToolkit( )
 {
-	FReimportManager::Instance()->OnPreReimport().RemoveAll(this);
-	FReimportManager::Instance()->OnPostReimport().RemoveAll(this);
-	GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.RemoveAll(this);
-
 	GEditor->UnregisterForUndo(this);
 }
 
@@ -116,10 +112,6 @@ void FPDFViewerToolkit::UnregisterTabSpawners( const TSharedRef<class FTabManage
 
 void FPDFViewerToolkit::InitPDFViewer( const EToolkitMode::Type Mode, const TSharedPtr< class IToolkitHost >& InitToolkitHost, UObject* ObjectToEdit )
 {
-	FReimportManager::Instance()->OnPreReimport().AddRaw(this, &FPDFViewerToolkit::HandleReimportManagerPreReimport);
-	FReimportManager::Instance()->OnPostReimport().AddRaw(this, &FPDFViewerToolkit::HandleReimportManagerPostReimport);
-	GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.AddRaw(this, &FPDFViewerToolkit::HandleAssetPostImport);
-
 	PDF = CastChecked<UPDF>(ObjectToEdit);
 	CurrentPage = 1;
 	Texture = PDF->GetPageTexture(CurrentPage);
@@ -366,18 +358,6 @@ bool FPDFViewerToolkit::HasValidTextureResource( ) const
 
 bool FPDFViewerToolkit::GetUseSpecifiedMip( ) const
 {
-	if (GetMaxMipLevel().Get(MIPLEVEL_MAX) > 0)
-	{
-		if (HandleMipLevelCheckBoxIsEnabled())
-		{
-			return bUseSpecifiedMipLevel;
-		}
-
-		// by default this is on
-		return true; 
-	}
-
-	// disable the widgets if we have no mip maps
 	return false;
 }
 
@@ -858,13 +838,54 @@ void FPDFViewerToolkit::CreateInternalWidgets( )
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void FPDFViewerToolkit::ExtendToolBar( )
 {
+	TSharedRef<SWidget> PageControl = SNew(SBox)
+		.WidthOverride(100.0f)
+		[
+			SNew(SHorizontalBox)
+
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.0f)
+			.MaxWidth(100.0f)
+			.Padding(0.0f, 0.0f, 0.0f, 0.0f)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SVerticalBox)
+				
+				+ SVerticalBox::Slot()
+				.FillHeight(1.0f)
+				.MaxHeight(50.f)
+				.Padding(5.0f, 0.0f, 5.0f, 5.0f)
+				.VAlign(VAlign_Center)
+				[
+					SNew(SNumericEntryBox<int32>)
+					.AllowSpin(true)
+					.MinSliderValue(1)
+					.MaxSliderValue(PDF->GetPageCount())
+					.Value(this, &FPDFViewerToolkit::HandleCurrentPageEntryBoxValue)
+					.OnValueChanged(this, &FPDFViewerToolkit::HandleCurrentPageEntryBoxChanged)
+					.ToolTipText(LOCTEXT("PageControl_ToolTip", "Go to a page by entering the number of pages."))
+				]
+
+				+ SVerticalBox::Slot()
+				.FillHeight(1.0f)
+				.MaxHeight(50.f)
+				.Padding(0.0f, 0.0f, 0.0f, 0.0f)
+				.VAlign(VAlign_Bottom)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("PageControl_Text", "Current Page"))
+					.Justification(ETextJustify::Center)
+				]
+			]
+		];
+
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
 	ToolbarExtender->AddToolBarExtension(
 		"Asset",
 		EExtensionHook::After,
 		GetToolkitCommands(),
-		FToolBarExtensionDelegate::CreateSP(this, &FPDFViewerToolkit::FillToolbar, GetToolkitCommands())
+		FToolBarExtensionDelegate::CreateSP(this, &FPDFViewerToolkit::FillToolbar, GetToolkitCommands(), PageControl)
 	);
 
 	AddToolbarExtender(ToolbarExtender);
@@ -873,15 +894,21 @@ void FPDFViewerToolkit::ExtendToolBar( )
 	AddToolbarExtender(PDFViewerModule->GetToolBarExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
 }
 
-void FPDFViewerToolkit::FillToolbar(FToolBarBuilder& ToolbarBuilder, const TSharedRef< FUICommandList > InToolkitCommands)
+void FPDFViewerToolkit::FillToolbar(FToolBarBuilder& ToolbarBuilder, const TSharedRef< FUICommandList > InToolkitCommands, TSharedRef<SWidget> PageControl)
 {
 	UCurveLinearColorAtlas* Atlas = Cast<UCurveLinearColorAtlas>(GetTexture());
 	if (!Atlas)
 	{
-		ToolbarBuilder.BeginSection("TextureMisc");
+		ToolbarBuilder.BeginSection("PdfMisc");
 		{
 			ToolbarBuilder.AddToolBarButton(FPDFViewerCommands::Get().BackPage, NAME_None, TAttribute<FText>(), TAttribute<FText>(), FSlateIcon(TEXT("PdfViewerStyle"), TEXT("PDFViewer.BackButton")));
 			ToolbarBuilder.AddToolBarButton(FPDFViewerCommands::Get().NextPage, NAME_None, TAttribute<FText>(), TAttribute<FText>(), FSlateIcon(TEXT("PdfViewerStyle"), TEXT("PDFViewer.NextButton")));
+		}
+		ToolbarBuilder.EndSection();
+
+		ToolbarBuilder.BeginSection("PdfPageControl");
+		{
+			ToolbarBuilder.AddWidget(PageControl);
 		}
 		ToolbarBuilder.EndSection();
 	}
@@ -892,37 +919,6 @@ END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 TOptional<int32> FPDFViewerToolkit::GetMaxMipLevel( ) const
 {
-	const UTexture2D* Texture2D = Cast<UTexture2D>(Texture);
-	const UTextureCube* TextureCube = Cast<UTextureCube>(Texture);
-	const UTextureRenderTargetCube* RTTextureCube = Cast<UTextureRenderTargetCube>(Texture);
-	const UTextureRenderTarget2D* RTTexture2D = Cast<UTextureRenderTarget2D>(Texture);
-	const UVolumeTexture* VolumeTexture = Cast<UVolumeTexture>(Texture);
-
-	if (Texture2D)
-	{
-		return Texture2D->GetNumMips() - 1;
-	}
-
-	if (TextureCube)
-	{
-		return TextureCube->GetNumMips() - 1;
-	}
-
-	if (RTTextureCube)
-	{
-		return RTTextureCube->GetNumMips() - 1;
-	}
-
-	if (RTTexture2D)
-	{
-		return RTTexture2D->GetNumMips() - 1;
-	}
-
-	if (VolumeTexture)
-	{
-		return VolumeTexture->GetNumMips() - 1;
-	}
-
 	return MIPLEVEL_MAX;
 }
 
@@ -1005,30 +1001,6 @@ bool FPDFViewerToolkit::HandleVolumeViewModeActionIsChecked(EPDFViewerVolumeView
 }
 
 
-void FPDFViewerToolkit::HandleCompressNowActionExecute( )
-{
-	GWarn->BeginSlowTask(NSLOCTEXT("PDFViewer", "CompressNow", "Compressing 1 Textures that have Defer Compression set"), true);
-
-	if (Texture->DeferCompression)
-	{
-		// turn off deferred compression and compress the texture
-		Texture->DeferCompression = false;
-		Texture->Source.Compress();
-		Texture->PostEditChange();
-
-		PopulateQuickInfo();
-	}
-
-	GWarn->EndSlowTask();
-}
-
-
-bool FPDFViewerToolkit::HandleCompressNowActionCanExecute( ) const
-{
-	return (Texture->DeferCompression != 0);
-}
-
-
 void FPDFViewerToolkit::HandleFitToViewportActionExecute( )
 {
 	ToggleFitToViewport();
@@ -1053,65 +1025,6 @@ bool FPDFViewerToolkit::HandleGreenChannelActionIsChecked( ) const
 }
 
 
-void FPDFViewerToolkit::HandleMipLevelCheckBoxCheckedStateChanged( ECheckBoxState InNewState )
-{
-	bUseSpecifiedMipLevel = InNewState == ECheckBoxState::Checked;
-}
-
-
-ECheckBoxState FPDFViewerToolkit::HandleMipLevelCheckBoxIsChecked( ) const
-{
-	return GetUseSpecifiedMip() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-
-bool FPDFViewerToolkit::HandleMipLevelCheckBoxIsEnabled( ) const
-{
-	UTextureCube* TextureCube = Cast<UTextureCube>(Texture);
-
-	if (GetMaxMipLevel().Get(MIPLEVEL_MAX) <= 0 || TextureCube)
-	{
-		return false;
-	}
-
-	return true;
-}
-
-
-void FPDFViewerToolkit::HandleMipLevelEntryBoxChanged( int32 NewMipLevel )
-{
-	SpecifiedMipLevel = FMath::Clamp<int32>(NewMipLevel, MIPLEVEL_MIN, GetMaxMipLevel().Get(MIPLEVEL_MAX));
-}
-
-
-TOptional<int32> FPDFViewerToolkit::HandleMipLevelEntryBoxValue( ) const
-{
-	return SpecifiedMipLevel;
-}
-
-
-FReply FPDFViewerToolkit::HandleMipMapMinusButtonClicked( )
-{
-	if (SpecifiedMipLevel > MIPLEVEL_MIN)
-	{
-		--SpecifiedMipLevel;
-	}
-
-	return FReply::Handled();
-}
-
-
-FReply FPDFViewerToolkit::HandleMipMapPlusButtonClicked( )
-{
-	if (SpecifiedMipLevel < GetMaxMipLevel().Get(MIPLEVEL_MAX))
-	{
-		++SpecifiedMipLevel;
-	}
-
-	return FReply::Handled();
-}
-
-
 void FPDFViewerToolkit::HandleRedChannelActionExecute( )
 {
 	bIsRedChannel = !bIsRedChannel;
@@ -1123,67 +1036,6 @@ bool FPDFViewerToolkit::HandleRedChannelActionIsChecked( ) const
 	return bIsRedChannel;
 }
 
-
-bool FPDFViewerToolkit::HandleReimportActionCanExecute( ) const
-{
-	if (Texture->IsA<ULightMapTexture2D>() || Texture->IsA<UShadowMapTexture2D>() || Texture->IsA<UTexture2DDynamic>() || Texture->IsA<UTextureRenderTarget>() || Texture->IsA<UCurveLinearColorAtlas>())
-	{
-		return false;
-	}
-
-	return true;
-}
-
-
-void FPDFViewerToolkit::HandleReimportActionExecute( )
-{
-	FReimportManager::Instance()->Reimport(Texture, /*bAskForNewFileIfMissing=*/true);
-}
-
-
-void FPDFViewerToolkit::HandleReimportManagerPostReimport( UObject* InObject, bool bSuccess )
-{
-	// Ignore if this is regarding a different object
-	if (InObject != Texture)
-	{
-		return;
-	}
-
-	if (!bSuccess)
-	{
-		// Failed, restore the compression flag
-		Texture->DeferCompression = SavedCompressionSetting;
-	}
-
-	// Re-enable viewport rendering now that the texture should be in a known state again
-	TextureViewport->EnableRendering();
-}
-
-
-void FPDFViewerToolkit::HandleReimportManagerPreReimport( UObject* InObject )
-{
-	// Ignore if this is regarding a different object
-	if (InObject != Texture)
-	{
-		return;
-	}
-
-	// Prevent the texture from being compressed immediately, so the user can see the results
-	SavedCompressionSetting = Texture->DeferCompression;
-	Texture->DeferCompression = true;
-
-	// Disable viewport rendering until the texture has finished re-importing
-	TextureViewport->DisableRendering();
-}
-
-void FPDFViewerToolkit::HandleAssetPostImport(UFactory* InFactory, UObject* InObject)
-{
-	if (Cast<UTexture>(InObject) != nullptr && InObject == Texture)
-	{
-		// Refresh this object within the details panel
-		TexturePropertiesWidget->SetObject(InObject);
-	}
-}
 
 void FPDFViewerToolkit::HandleDesaturationChannelActionExecute( )
 {
@@ -1247,11 +1099,29 @@ bool FPDFViewerToolkit::HandleTextureBorderActionIsChecked( ) const
 	return Settings.TextureBorderEnabled;
 }
 
+
+void FPDFViewerToolkit::HandleCurrentPageEntryBoxChanged(int32 NewPageCount)
+{
+	if (NewPageCount >= 1 && NewPageCount <= PDF->GetPageCount())
+	{
+		CurrentPage = NewPageCount;
+		Texture = PDF->GetPageTexture(CurrentPage);
+	}
+}
+
+
+TOptional<int32> FPDFViewerToolkit::HandleCurrentPageEntryBoxValue() const
+{
+	return CurrentPage;
+}
+
+
 void FPDFViewerToolkit::HandleBackPage()
 {
 	CurrentPage--;
 	Texture = PDF->GetPageTexture(CurrentPage);
 }
+
 
 void FPDFViewerToolkit::HandleNextPage()
 {
@@ -1259,14 +1129,17 @@ void FPDFViewerToolkit::HandleNextPage()
 	Texture = PDF->GetPageTexture(CurrentPage);
 }
 
+
 bool FPDFViewerToolkit::HandleIsBackPageButtonEnable() const
 {
 	return CurrentPage > 1;
 }
 
+
 bool FPDFViewerToolkit::HandleIsNextPageButtonEnable() const
 {
 	return CurrentPage < PDF->GetPageCount();
 }
+
 
 #undef LOCTEXT_NAMESPACE
