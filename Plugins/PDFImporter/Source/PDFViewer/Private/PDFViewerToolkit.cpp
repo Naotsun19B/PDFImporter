@@ -36,6 +36,7 @@
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "DeviceProfiles/DeviceProfile.h"
 #include "Curves/CurveLinearColorAtlas.h"
+#include "PDFViewerStyle.h"
 #include "PDF.h"
 
 #define LOCTEXT_NAMESPACE "FPDFViewerToolkit"
@@ -62,6 +63,8 @@ FPDFViewerToolkit::FPDFViewerToolkit()
 	, VolumeOpacity(1.f)
 	, VolumeOrientation(90, 0, -90)
 {
+	// Load styles used in pdf viewer
+	Style = MakeShareable(new FPDFViewerStyle());
 }
 
 FPDFViewerToolkit::~FPDFViewerToolkit( )
@@ -855,15 +858,15 @@ void FPDFViewerToolkit::CreateInternalWidgets( )
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void FPDFViewerToolkit::ExtendToolBar( )
 {
-	TSharedRef<SWidget> LODControl = SNew(SBox)
-		.WidthOverride(240.0f)
+	TSharedRef<SWidget> PageControl = SNew(SBox)
+		.WidthOverride(130.0f)
 		[
 			SNew(SHorizontalBox)
 
 			+ SHorizontalBox::Slot()
-				.FillWidth(1.0f)
-				.MaxWidth(240.0f)
-				.Padding(0.0f, 0.0f, 0.0f, 0.0f)
+				.FillWidth(50.0f)
+				.MaxWidth(50.0f)
+				.Padding(5.0f, 0.0f, 5.0f, 0.0f)
 				.VAlign(VAlign_Center)
 				[
 					SNew(SVerticalBox)
@@ -873,26 +876,35 @@ void FPDFViewerToolkit::ExtendToolBar( )
 						.MaxHeight(50.f)
 						.Padding(0.0f, 0.0f, 0.0f, 0.0f)
 						.VAlign(VAlign_Center)
+						.AutoHeight()
 						[
 							SNew(SButton)
+							.ButtonColorAndOpacity(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)))
+							.ToolTipText(LOCTEXT("BackPage_ToolTip", "To the previous page"))
 							.OnClicked_Raw(this, &FPDFViewerToolkit::HandleBackPage)
 							.IsEnabled_Raw(this, &FPDFViewerToolkit::HandleIsBackPageButtonEnable)
+							.Content()
+							[
+								SNew(SImage)
+								.Image(Style->GetBrush("BackPageButtonImage"))
+							]
 						]
 					+ SVerticalBox::Slot()
 						.FillHeight(1.0f)
 						.MaxHeight(50.f)
-						.Padding(0.0f, 0.0f, 0.0f, 0.0f)
-						.VAlign(VAlign_Center)
+						.Padding(0.0f, -5.0f, 0.0f, 0.0f)
+						.VAlign(VAlign_Bottom)
 						[
 							SNew(STextBlock)
-							.Text(LOCTEXT("BackPage", "Back Page"))
+							.Text(LOCTEXT("BackButtonText", "Back"))
+							.Justification(ETextJustify::Center)
 						]
 				]
 
 			+ SHorizontalBox::Slot()
-				.FillWidth(1.0f)
-				.MaxWidth(240.0f)
-				.Padding(0.0f, 0.0f, 0.0f, 0.0f)
+				.FillWidth(50.0f)
+				.MaxWidth(50.0f)
+				.Padding(5.0f, 0.0f, 5.0f, 0.0f)
 				.VAlign(VAlign_Center)
 				[
 					SNew(SVerticalBox)
@@ -902,19 +914,28 @@ void FPDFViewerToolkit::ExtendToolBar( )
 						.MaxHeight(50.f)
 						.Padding(0.0f, 0.0f, 0.0f, 0.0f)
 						.VAlign(VAlign_Center)
+						.AutoHeight()
 						[
 							SNew(SButton)
+							.ButtonColorAndOpacity(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)))
+							.ToolTipText(LOCTEXT("NextPage_ToolTip", "To the next page"))
 							.OnClicked_Raw(this, &FPDFViewerToolkit::HandleNextPage)
 							.IsEnabled_Raw(this, &FPDFViewerToolkit::HandleIsNextPageButtonEnable)
+							.Content()
+							[
+								SNew(SImage)
+								.Image(Style->GetBrush("NextPageButtonImage"))
+							]
 						]
 					+ SVerticalBox::Slot()
 						.FillHeight(1.0f)
 						.MaxHeight(50.f)
-						.Padding(0.0f, 0.0f, 0.0f, 0.0f)
-						.VAlign(VAlign_Center)
+						.Padding(0.0f, -5.0f, 0.0f, 0.0f)
+						.VAlign(VAlign_Bottom)
 						[
 							SNew(STextBlock)
-							.Text(LOCTEXT("NextPage", "Next Page"))
+							.Text(LOCTEXT("NextButtonText", "Next"))
+							.Justification(ETextJustify::Center)
 						]
 				]
 		];
@@ -925,7 +946,7 @@ void FPDFViewerToolkit::ExtendToolBar( )
 		"Asset",
 		EExtensionHook::After,
 		GetToolkitCommands(),
-		FToolBarExtensionDelegate::CreateSP(this, &FPDFViewerToolkit::FillToolbar, GetToolkitCommands(), LODControl)
+		FToolBarExtensionDelegate::CreateSP(this, &FPDFViewerToolkit::FillToolbar, GetToolkitCommands(), PageControl)
 	);
 
 	AddToolbarExtender(ToolbarExtender);

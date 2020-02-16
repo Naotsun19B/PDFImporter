@@ -37,7 +37,8 @@ public class PDFViewer : ModuleRules
 				"SlateCore",
                 "EditorStyle",
 				"UnrealEd",
-                "PropertyEditor"
+                "PropertyEditor",
+                "Projects",
             }
 		);
 	}

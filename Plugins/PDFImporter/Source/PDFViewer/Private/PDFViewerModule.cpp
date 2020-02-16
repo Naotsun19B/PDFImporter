@@ -15,7 +15,6 @@
 #include "Customizations/TextureDetailsCustomization.h"
 #include "Customizations/CurveLinearColorAtlasDetailsCustomization.h"
 
-
 #define LOCTEXT_NAMESPACE "FPDFViewerModule"
 
 
@@ -26,8 +25,7 @@ extern const FName PDFViewerAppIdentifier = FName(TEXT("PDFViewerApp"));
    FPDFViewerModule
 -----------------------------------------------------------------------------*/
 
-class FPDFViewerModule
-	: public IPDFViewerModule
+class FPDFViewerModule : public IPDFViewerModule
 {
 public:
 

@@ -266,6 +266,9 @@ private:
 	/** The Texture asset being inspected */
 	UTexture* Texture;
 
+	/** Style used in pdf viewer **/
+	class TSharedPtr<class FPDFViewerStyle> Style;
+
 	/** List of open tool panels; used to ensure only one exists at any one time */
 	TMap<FName, TWeakPtr<SDockableTab>> SpawnedToolPanels;
 
