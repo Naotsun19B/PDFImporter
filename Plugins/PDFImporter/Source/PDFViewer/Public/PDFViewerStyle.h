@@ -10,14 +10,16 @@ class FPDFViewerStyle : public FSlateStyleSet
 public:
 	FPDFViewerStyle() : FSlateStyleSet("PDFViewerStyle")
 	{
+		// Register pdf viewer style set
 		SetContentRoot(IPluginManager::Get().FindPlugin(TEXT("PDFImporter"))->GetBaseDir() / TEXT("Resources"));
-		Set("BackPageButtonImage", new IMAGE_BRUSH("IconBackPage128", FVector2D(128.f, 128.f)));
-		Set("NextPageButtonImage", new IMAGE_BRUSH("IconNextPage128", FVector2D(128.f, 128.f)));
+		Set("PDFViewer.BackButton", new IMAGE_BRUSH("IconBackPage128", FVector2D(40.f, 40.f)));
+		Set("PDFViewer.NextButton", new IMAGE_BRUSH("IconNextPage128", FVector2D(40.f, 40.f)));
 		FSlateStyleRegistry::RegisterSlateStyle(*this);
 	}
 
 	~FPDFViewerStyle()
 	{
+		// Unregister pdf viewer style set
 		FSlateStyleRegistry::UnRegisterSlateStyle(*this);
 	}
 };

@@ -121,7 +121,7 @@ protected:
 	 */
 	void ExtendToolBar( );
 
-	void FillToolbar(FToolBarBuilder& ToolbarBuilder, const TSharedRef< FUICommandList > ToolkitCommands, TSharedRef<SWidget> LODControl);
+	void FillToolbar(FToolBarBuilder& ToolbarBuilder, const TSharedRef< FUICommandList > ToolkitCommands);
 	/**
 	 * Gets the highest mip map level that this texture supports.
 	 *
@@ -245,10 +245,10 @@ private:
 	bool HandleTextureBorderActionIsChecked( ) const;
 
 	// Callback that fires when the back page button is pressed.
-	FReply HandleBackPage();
+	void HandleBackPage();
 
 	// Callback that fires when the next page button is pressed.
-	FReply HandleNextPage();
+	void HandleNextPage();
 
 	// Back page button determines activation
 	bool HandleIsBackPageButtonEnable() const;

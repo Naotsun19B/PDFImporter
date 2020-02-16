@@ -65,7 +65,7 @@ public:
 		if (SettingsModule != nullptr)
 		{
 			SettingsModule->RegisterSettings("Editor", "ContentEditors", "PDFViewer",
-				LOCTEXT("PDFViewerSettingsName", "Texture Editor"),
+				LOCTEXT("PDFViewerSettingsName", "PDF Viewer"),
 				LOCTEXT("PDFViewerSettingsDescription", "Configure the look and feel of the Texture Editor."),
 				GetMutableDefault<UPDFViewerSettings>()
 			);

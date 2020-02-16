@@ -21,8 +21,8 @@ void FPDFViewerCommands::RegisterCommands()
 	UI_COMMAND(DepthSlices, "Depth Slices", "Shows depth slice side by side", EUserInterfaceActionType::RadioButton, FInputChord());
 	UI_COMMAND(TraceIntoVolume, "Trace Into Volume", "Traces into the volume, accumuling opacity / color", EUserInterfaceActionType::RadioButton, FInputChord());
 
-	UI_COMMAND(CompressNow, "Compress", "Compress the texture", EUserInterfaceActionType::Button, FInputChord());
-	UI_COMMAND(Reimport, "Reimport", "Reimports the texture from file", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(BackPage, "Back", "To the previous page", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(NextPage, "Next", "To the next page", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(Settings, "Settings...", "Opens the settings for the texture editor", EUserInterfaceActionType::Button, FInputChord());
 }
 

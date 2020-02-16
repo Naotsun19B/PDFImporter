@@ -715,14 +715,14 @@ void FPDFViewerToolkit::BindCommands( )
 		FIsActionChecked::CreateSP(this, &FPDFViewerToolkit::HandleTextureBorderActionIsChecked));
 
 	ToolkitCommands->MapAction(
-		Commands.CompressNow,
-		FExecuteAction::CreateSP(this, &FPDFViewerToolkit::HandleCompressNowActionExecute),
-		FCanExecuteAction::CreateSP(this, &FPDFViewerToolkit::HandleCompressNowActionCanExecute));
+		Commands.BackPage,
+		FExecuteAction::CreateSP(this, &FPDFViewerToolkit::HandleBackPage),
+		FCanExecuteAction::CreateSP(this, &FPDFViewerToolkit::HandleIsBackPageButtonEnable));
 
 	ToolkitCommands->MapAction(
-		Commands.Reimport,
-		FExecuteAction::CreateSP(this, &FPDFViewerToolkit::HandleReimportActionExecute),
-		FCanExecuteAction::CreateSP(this, &FPDFViewerToolkit::HandleReimportActionCanExecute));
+		Commands.NextPage,
+		FExecuteAction::CreateSP(this, &FPDFViewerToolkit::HandleNextPage),
+		FCanExecuteAction::CreateSP(this, &FPDFViewerToolkit::HandleIsNextPageButtonEnable));
 
 	ToolkitCommands->MapAction(
 		Commands.Settings,
@@ -858,95 +858,13 @@ void FPDFViewerToolkit::CreateInternalWidgets( )
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void FPDFViewerToolkit::ExtendToolBar( )
 {
-	TSharedRef<SWidget> PageControl = SNew(SBox)
-		.WidthOverride(130.0f)
-		[
-			SNew(SHorizontalBox)
-
-			+ SHorizontalBox::Slot()
-				.FillWidth(50.0f)
-				.MaxWidth(50.0f)
-				.Padding(5.0f, 0.0f, 5.0f, 0.0f)
-				.VAlign(VAlign_Center)
-				[
-					SNew(SVerticalBox)
-					
-					+ SVerticalBox::Slot()
-						.FillHeight(1.0f)
-						.MaxHeight(50.f)
-						.Padding(0.0f, 0.0f, 0.0f, 0.0f)
-						.VAlign(VAlign_Center)
-						.AutoHeight()
-						[
-							SNew(SButton)
-							.ButtonColorAndOpacity(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)))
-							.ToolTipText(LOCTEXT("BackPage_ToolTip", "To the previous page"))
-							.OnClicked_Raw(this, &FPDFViewerToolkit::HandleBackPage)
-							.IsEnabled_Raw(this, &FPDFViewerToolkit::HandleIsBackPageButtonEnable)
-							.Content()
-							[
-								SNew(SImage)
-								.Image(Style->GetBrush("BackPageButtonImage"))
-							]
-						]
-					+ SVerticalBox::Slot()
-						.FillHeight(1.0f)
-						.MaxHeight(50.f)
-						.Padding(0.0f, -5.0f, 0.0f, 0.0f)
-						.VAlign(VAlign_Bottom)
-						[
-							SNew(STextBlock)
-							.Text(LOCTEXT("BackButtonText", "Back"))
-							.Justification(ETextJustify::Center)
-						]
-				]
-
-			+ SHorizontalBox::Slot()
-				.FillWidth(50.0f)
-				.MaxWidth(50.0f)
-				.Padding(5.0f, 0.0f, 5.0f, 0.0f)
-				.VAlign(VAlign_Center)
-				[
-					SNew(SVerticalBox)
-
-					+ SVerticalBox::Slot()
-						.FillHeight(1.0f)
-						.MaxHeight(50.f)
-						.Padding(0.0f, 0.0f, 0.0f, 0.0f)
-						.VAlign(VAlign_Center)
-						.AutoHeight()
-						[
-							SNew(SButton)
-							.ButtonColorAndOpacity(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)))
-							.ToolTipText(LOCTEXT("NextPage_ToolTip", "To the next page"))
-							.OnClicked_Raw(this, &FPDFViewerToolkit::HandleNextPage)
-							.IsEnabled_Raw(this, &FPDFViewerToolkit::HandleIsNextPageButtonEnable)
-							.Content()
-							[
-								SNew(SImage)
-								.Image(Style->GetBrush("NextPageButtonImage"))
-							]
-						]
-					+ SVerticalBox::Slot()
-						.FillHeight(1.0f)
-						.MaxHeight(50.f)
-						.Padding(0.0f, -5.0f, 0.0f, 0.0f)
-						.VAlign(VAlign_Bottom)
-						[
-							SNew(STextBlock)
-							.Text(LOCTEXT("NextButtonText", "Next"))
-							.Justification(ETextJustify::Center)
-						]
-				]
-		];
-
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
 	ToolbarExtender->AddToolBarExtension(
 		"Asset",
 		EExtensionHook::After,
 		GetToolkitCommands(),
-		FToolBarExtensionDelegate::CreateSP(this, &FPDFViewerToolkit::FillToolbar, GetToolkitCommands(), PageControl)
+		FToolBarExtensionDelegate::CreateSP(this, &FPDFViewerToolkit::FillToolbar, GetToolkitCommands())
 	);
 
 	AddToolbarExtender(ToolbarExtender);
@@ -955,21 +873,15 @@ void FPDFViewerToolkit::ExtendToolBar( )
 	AddToolbarExtender(PDFViewerModule->GetToolBarExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
 }
 
-void FPDFViewerToolkit::FillToolbar(FToolBarBuilder& ToolbarBuilder, const TSharedRef< FUICommandList > InToolkitCommands, TSharedRef<SWidget> LODControl)
+void FPDFViewerToolkit::FillToolbar(FToolBarBuilder& ToolbarBuilder, const TSharedRef< FUICommandList > InToolkitCommands)
 {
 	UCurveLinearColorAtlas* Atlas = Cast<UCurveLinearColorAtlas>(GetTexture());
 	if (!Atlas)
 	{
 		ToolbarBuilder.BeginSection("TextureMisc");
 		{
-			//ToolbarBuilder.AddToolBarButton(FPDFViewerCommands::Get().CompressNow);
-			//ToolbarBuilder.AddToolBarButton(FPDFViewerCommands::Get().Reimport);
-		}
-		ToolbarBuilder.EndSection();
-
-		ToolbarBuilder.BeginSection("TextureMipAndExposure");
-		{
-			ToolbarBuilder.AddWidget(LODControl);
+			ToolbarBuilder.AddToolBarButton(FPDFViewerCommands::Get().BackPage, NAME_None, TAttribute<FText>(), TAttribute<FText>(), FSlateIcon(TEXT("PdfViewerStyle"), TEXT("PDFViewer.BackButton")));
+			ToolbarBuilder.AddToolBarButton(FPDFViewerCommands::Get().NextPage, NAME_None, TAttribute<FText>(), TAttribute<FText>(), FSlateIcon(TEXT("PdfViewerStyle"), TEXT("PDFViewer.NextButton")));
 		}
 		ToolbarBuilder.EndSection();
 	}
@@ -1335,20 +1247,16 @@ bool FPDFViewerToolkit::HandleTextureBorderActionIsChecked( ) const
 	return Settings.TextureBorderEnabled;
 }
 
-FReply FPDFViewerToolkit::HandleBackPage()
+void FPDFViewerToolkit::HandleBackPage()
 {
 	CurrentPage--;
 	Texture = PDF->GetPageTexture(CurrentPage);
-
-	return FReply::Handled();
 }
 
-FReply FPDFViewerToolkit::HandleNextPage()
+void FPDFViewerToolkit::HandleNextPage()
 {
 	CurrentPage++;
 	Texture = PDF->GetPageTexture(CurrentPage);
-
-	return FReply::Handled();
 }
 
 bool FPDFViewerToolkit::HandleIsBackPageButtonEnable() const

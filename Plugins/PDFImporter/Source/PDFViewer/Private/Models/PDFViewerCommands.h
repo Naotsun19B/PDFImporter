@@ -9,8 +9,7 @@
 /**
  * Holds the UI commands for the PDFViewerToolkit widget.
  */
-class FPDFViewerCommands
-	: public TCommands<FPDFViewerCommands>
+class FPDFViewerCommands : public TCommands<FPDFViewerCommands>
 {
 public:
 
@@ -18,7 +17,7 @@ public:
 	 * Default constructor.
 	 */
 	FPDFViewerCommands( ) 
-		: TCommands<FPDFViewerCommands>("PDFViewer", NSLOCTEXT("Contexts", "PDFViewer", "Texture Editor"), NAME_None, FEditorStyle::GetStyleSetName())
+		: TCommands<FPDFViewerCommands>("PDFViewer", NSLOCTEXT("Contexts", "PDFViewer", "PDF Viewer"), NAME_None, FEditorStyle::GetStyleSetName())
 	{ }
 
 public:
@@ -67,11 +66,11 @@ public:
 	/** If enabled, a border is drawn around the texture */
 	TSharedPtr<FUICommandInfo> TextureBorder;
 
-	/** Compress the texture */
-	TSharedPtr<FUICommandInfo> CompressNow;
+	/** To the previous page */
+	TSharedPtr<FUICommandInfo> BackPage;
 
-	/** Reimports the texture */
-	TSharedPtr<FUICommandInfo> Reimport;
+	/** To the next page */
+	TSharedPtr<FUICommandInfo> NextPage;
 
 	/** Open the texture editor settings. */
 	TSharedPtr< FUICommandInfo > Settings;
