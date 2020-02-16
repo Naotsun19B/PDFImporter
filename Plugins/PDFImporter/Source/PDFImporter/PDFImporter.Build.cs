@@ -37,13 +37,20 @@ public class PDFImporter : ModuleRules
 
         string GhostscriptPath = Path.Combine(ModuleDirectory, "..", "..", "ThirdParty");
         string Platform = string.Empty;
-        switch(Target.Platform)
+	
+        if(Target.Platform == UnrealTargetPlatform.Win64)
         {
-            case UnrealTargetPlatform.Win64:    Platform = "Win64";     break;
-            case UnrealTargetPlatform.Win32:    Platform = "Win32";     break;
-            default:
-                throw new Exception(string.Format("Unsupported platform {0}", Target.Platform.ToString()));
+            Platform = "Win64";
         }
+        else if(Target.Platform == UnrealTargetPlatform.Win32)
+        {
+            Platform = "Win32";
+        }
+        else
+        {
+            throw new Exception(string.Format("Unsupported platform {0}", Target.Platform.ToString()));
+        }
+	
         GhostscriptPath = Path.Combine(GhostscriptPath, Platform, "gsdll.dll");
 
         if(!File.Exists(GhostscriptPath))
