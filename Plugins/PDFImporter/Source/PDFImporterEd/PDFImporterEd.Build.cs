@@ -27,6 +27,7 @@ public class PDFImporterEd : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+                "PDFViewer",
 				"CoreUObject",
 				"Engine",
 				"Slate",

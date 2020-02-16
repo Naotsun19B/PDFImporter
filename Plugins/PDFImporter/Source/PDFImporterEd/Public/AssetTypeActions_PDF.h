@@ -6,6 +6,10 @@
 class PDFIMPORTERED_API FAssetTypeActions_PDF : public FAssetTypeActions_Base
 {
 public:
+	virtual void OpenAssetEditor(
+		const TArray<UObject*>& InObjects,
+		TSharedPtr<class IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>()
+	) override;
 	virtual FText GetName() const override
 	{
 		return NSLOCTEXT("AssetTypeActions", "AssetTypeActions_PDF", "PDF");

@@ -3,6 +3,7 @@
 	"Modules": 
 	{
 		"PDFImporter": "UE4Editor-PDFImporter.dll",
-		"PDFImporterEd": "UE4Editor-PDFImporterEd.dll"
+		"PDFImporterEd": "UE4Editor-PDFImporterEd.dll",
+		"PDFViewer": "UE4Editor-PDFViewer.dll"
 	}
 }

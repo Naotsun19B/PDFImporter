@@ -10,9 +10,9 @@
 #include "EditorFramework/AssetImportData.h"
 #endif
 
-static const int Version = 1;
-static const FGuid GUID(2020, 1, 13, 16);
-static FCustomVersionRegistration RegisterPDFCustomVersion(GUID, Version, TEXT("PDFVersion"));
+static const int PDF_Version = 1;
+static const FGuid PDF_GUID(2020, 1, 13, 16);
+static FCustomVersionRegistration RegisterPDFCustomVersion(PDF_GUID, PDF_Version, TEXT("PDFVersion"));
 
 UTexture2D* UPDF::GetPageTexture(int Page) const
 {
@@ -34,8 +34,8 @@ void UPDF::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
 
-	Ar.UsingCustomVersion(GUID);
-	if (Ar.IsSaving() || (Ar.IsLoading() && (Version <= Ar.CustomVer(GUID))))
+	Ar.UsingCustomVersion(PDF_GUID);
+	if (Ar.IsSaving() || (Ar.IsLoading() && (PDF_Version <= Ar.CustomVer(PDF_GUID))))
 	{
 		Ar << PageRange.FirstPage << PageRange.LastPage << Dpi << Pages << Filename << TimeStamp;
 	}

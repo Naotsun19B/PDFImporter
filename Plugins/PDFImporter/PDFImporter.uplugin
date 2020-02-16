@@ -19,10 +19,15 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		},
-		{
-			"Name": "PDFImporterEd",
-			"Type": "Developer",
-			"LoadingPhase": "PreDefault"
-		}
+    {
+      "Name": "PDFImporterEd",
+      "Type": "Developer",
+      "LoadingPhase": "PreDefault"
+    },
+    {
+      "Name": "PDFViewer",
+      "Type": "Developer",
+      "LoadingPhase": "PreDefault"
+    }
 	]
 }
