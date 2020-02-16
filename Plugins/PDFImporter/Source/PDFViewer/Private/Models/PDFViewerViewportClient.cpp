@@ -84,42 +84,42 @@ void FPDFViewerViewportClient::Draw(FViewport* Viewport, FCanvas* Canvas)
 	// Figure out the size we need
 	uint32 Width, Height;
 	PDFViewerPtr.Pin()->CalculateTextureDimensions(Width, Height);
-	const float MipLevel = (float)PDFViewerPtr.Pin()->GetMipLevel();
+	//const float MipLevel = (float)PDFViewerPtr.Pin()->GetMipLevel();
 
-	TRefCountPtr<FBatchedElementParameters> BatchedElementParameters;
+	//TRefCountPtr<FBatchedElementParameters> BatchedElementParameters;
 
-	if (GMaxRHIFeatureLevel >= ERHIFeatureLevel::SM4)
-	{
-		if (TextureCube || RTTextureCube)
-		{
-			BatchedElementParameters = new FMipLevelBatchedElementParameters(MipLevel, false);
-		}
-		else if (VolumeTexture)
-		{
-			BatchedElementParameters = new FBatchedElementVolumeTexturePreviewParameters(
-				Settings.VolumeViewMode == PDFViewerVolumeViewMode_DepthSlices, 
-				FMath::Max<int32>(VolumeTexture->GetSizeZ() >> VolumeTexture->GetCachedLODBias(), 1), 
-				MipLevel, 
-				(float)PDFViewerPtr.Pin()->GetVolumeOpacity(),
-				true, 
-				PDFViewerPtr.Pin()->GetVolumeOrientation());
-		}
-		else if (Texture2D)
-		{
-			bool bIsNormalMap = Texture2D->IsNormalMap();
-			bool bIsSingleChannel = Texture2D->CompressionSettings == TC_Grayscale || Texture2D->CompressionSettings == TC_Alpha;
-			BatchedElementParameters = new FBatchedElementTexture2DPreviewParameters(MipLevel, bIsNormalMap, bIsSingleChannel);
-		}
-		else if (TextureRT2D)
-		{
-			BatchedElementParameters = new FBatchedElementTexture2DPreviewParameters(MipLevel, false, false);
-		}
-		else
-		{
-			// Default to treating any UTexture derivative as a 2D texture resource
-			BatchedElementParameters = new FBatchedElementTexture2DPreviewParameters(MipLevel, false, false);
-		}
-	}
+	//if (GMaxRHIFeatureLevel >= ERHIFeatureLevel::SM4)
+	//{
+	//	if (TextureCube || RTTextureCube)
+	//	{
+	//		BatchedElementParameters = new FMipLevelBatchedElementParameters(MipLevel, false);
+	//	}
+	//	else if (VolumeTexture)
+	//	{
+	//		BatchedElementParameters = new FBatchedElementVolumeTexturePreviewParameters(
+	//			Settings.VolumeViewMode == PDFViewerVolumeViewMode_DepthSlices, 
+	//			FMath::Max<int32>(VolumeTexture->GetSizeZ() >> VolumeTexture->GetCachedLODBias(), 1), 
+	//			MipLevel, 
+	//			(float)PDFViewerPtr.Pin()->GetVolumeOpacity(),
+	//			true, 
+	//			PDFViewerPtr.Pin()->GetVolumeOrientation());
+	//	}
+	//	else if (Texture2D)
+	//	{
+	//		bool bIsNormalMap = Texture2D->IsNormalMap();
+	//		bool bIsSingleChannel = Texture2D->CompressionSettings == TC_Grayscale || Texture2D->CompressionSettings == TC_Alpha;
+	//		BatchedElementParameters = new FBatchedElementTexture2DPreviewParameters(MipLevel, bIsNormalMap, bIsSingleChannel);
+	//	}
+	//	else if (TextureRT2D)
+	//	{
+	//		BatchedElementParameters = new FBatchedElementTexture2DPreviewParameters(MipLevel, false, false);
+	//	}
+	//	else
+	//	{
+	//		// Default to treating any UTexture derivative as a 2D texture resource
+	//		BatchedElementParameters = new FBatchedElementTexture2DPreviewParameters(MipLevel, false, false);
+	//	}
+	//}
 
 	// Draw the background checkerboard pattern in the same size/position as the render texture so it will show up anywhere
 	// the texture has transparency
@@ -138,7 +138,7 @@ void FPDFViewerViewportClient::Draw(FViewport* Viewport, FCanvas* Canvas)
 	{
 		FCanvasTileItem TileItem( FVector2D( XPos, YPos ), Texture->Resource, FVector2D( Width, Height ), FLinearColor(Exposure, Exposure, Exposure) );
 		TileItem.BlendMode = PDFViewerPtr.Pin()->GetColourChannelBlendMode();
-		TileItem.BatchedElementParameters = BatchedElementParameters;
+		//TileItem.BatchedElementParameters = BatchedElementParameters;
 		Canvas->DrawItem( TileItem );
 
 		// Draw a white border around the texture to show its extents
