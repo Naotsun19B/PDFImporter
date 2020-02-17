@@ -2,11 +2,11 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "PDFImporter",
-	"Description": "",
+	"FriendlyName": "PDF Importer",
+	"Description": "The plug-in can import PDF files as PDF assets into the editor and view them in a special editor. Also add a Blueprint node that loads the PDF file as a PDF asset at runtime.",
 	"Category": "Misc",
 	"CreatedBy": "Naotsun",
-	"CreatedByURL": "",
+	"CreatedByURL": "https://twitter.com/Naotsun_UE",
 	"DocsURL": "",
 	"MarketplaceURL": "",
 	"SupportURL": "",
@@ -19,15 +19,15 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		},
-    {
-      "Name": "PDFImporterEd",
-      "Type": "Developer",
-      "LoadingPhase": "PreDefault"
-    },
-    {
-      "Name": "PDFViewer",
-      "Type": "Developer",
-      "LoadingPhase": "PreDefault"
-    }
+		{
+			"Name": "PDFImporterEd",
+			"Type": "Developer",
+			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "PDFViewer",
+			"Type": "Developer",
+			"LoadingPhase": "PreDefault"
+		}
 	]
 }
