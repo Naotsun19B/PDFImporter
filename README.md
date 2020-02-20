@@ -16,12 +16,12 @@ https://www.ghostscript.com/license.html
 ## OpenPDFDialog  
 ![2](https://user-images.githubusercontent.com/51815450/74625151-b14c6080-518e-11ea-844f-2dd12c10d7b9.PNG)  
 
-ファイルブラウザからPDFファイルを選択し、そのファイルパスを返します。
+ファイルピッカーからPDFファイルを選択し、そのファイルパスを返します。
 
 ## OpenPDFDialogMultiple  
 ![8](https://user-images.githubusercontent.com/51815450/74625171-c2956d00-518e-11ea-80f0-84c8a13cca9b.PNG)  
 
-ファイルブラウザから複数のPDFファイルを選択し、そのファイルパスを返します。
+ファイルピッカーから複数のPDFファイルを選択し、そのファイルパスを返します。
 
 ## ConvertPDFtoPDFAsset  
 ![3](https://user-images.githubusercontent.com/51815450/74625179-c9bc7b00-518e-11ea-8ffe-a21548591460.PNG)  
