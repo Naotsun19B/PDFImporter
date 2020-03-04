@@ -28,8 +28,6 @@ void SPDFImportOptions::Construct(const FArguments& InArgs)
 
 	check(ImportOptions)
 
-	TArray<FString> Test;
-
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	FDetailsViewArgs DetailsViewArgs;
 	DetailsViewArgs.bAllowSearch = false;
@@ -40,7 +38,7 @@ void SPDFImportOptions::Construct(const FArguments& InArgs)
 	this->ChildSlot
 	[
 		SNew(SVerticalBox)
-		// ƒtƒ@ƒCƒ‹ƒpƒX
+		// ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹
 		+ SVerticalBox::Slot()
 			.AutoHeight()
 			.Padding(2)
@@ -68,14 +66,14 @@ void SPDFImportOptions::Construct(const FArguments& InArgs)
 					]
 				]
 			]
-		// “ü—Í—“
+		// å…¥åŠ›æ¬„
 		+ SVerticalBox::Slot()
 			.Padding(2)
 			.MaxHeight(500.0f)
 			[
 				DetailsView->AsShared()
 			]
-		// ƒCƒ“ƒ|[ƒg‚ÆƒLƒƒƒ“ƒZƒ‹‚Ìƒ{ƒ^ƒ“
+		// ã‚¤ãƒ³ãƒãƒ¼ãƒˆã¨ã‚­ãƒ£ãƒ³ã‚»ãƒ«ã®ãƒœã‚¿ãƒ³
 		+ SVerticalBox::Slot()
 			.AutoHeight()
 			.HAlign(HAlign_Right)
